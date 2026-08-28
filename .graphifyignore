@@ -1,0 +1,6 @@
+.git/
+.gocache/
+bin/
+dist/
+graphify-out/
+vendor/

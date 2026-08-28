@@ -1,0 +1,53 @@
+# Build output
+/bin/
+/dist/
+/out/
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.prof
+*.out
+
+# Coverage and fuzz artifacts
+coverage.*
+*.coverprofile
+testdata/fuzz/
+
+# Go workspace and local caches
+go.work
+go.work.sum
+.gocache/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Local tool caches and analysis artifacts
+.claude/
+.codex/
+.cursor/
+.gemini/
+graphify-out/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Compiled binaries at package roots
+cmd/snapdiff/snapdiff

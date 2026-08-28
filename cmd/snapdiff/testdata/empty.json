@@ -1,0 +1,20 @@
+{
+  "schema_version": "1",
+  "session": {
+    "id": "session-empty",
+    "started": "2026-08-27T14:00:00Z",
+    "finished": "2026-08-27T14:05:00Z"
+  },
+  "cases": [],
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "not_applicable": 0,
+    "disabled": 0,
+    "errored": 0,
+    "flaked": 0
+  },
+  "not_verified": []
+}
