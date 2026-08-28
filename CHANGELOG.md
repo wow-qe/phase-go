@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 Keep a Changelog; versions follow SemVer (pre-1.0: breaking changes only at
 minor bumps, each with a migration note).
 
-## [Unreleased] — v0.1.0 candidate
+## [0.1.0] — 2026-08-28
 
 The first public release. Everything below ships together; the three
 modules (`phase-go`, `x/config`, `x/comparators`) release in lockstep at
