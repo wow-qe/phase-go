@@ -1,6 +1,7 @@
 # Releasing
 
-Phase Go follows Semantic Versioning and uses signed annotated Git tags.
+Phase Go follows Semantic Versioning and uses annotated Git tags
+(signed once a maintainer release key is provisioned).
 
 This is a **multi-module repository**. Three library modules are published,
 and they release in **lockstep** — the same version, tagged on the same
@@ -41,15 +42,15 @@ are provisioned in CI.
 3. Confirm `x/config/go.mod` and `x/comparators/go.mod` `require` the
    version you are about to tag. Commit if they need bumping.
 4. Run `make ci` on the supported Go versions.
-5. Create the three signed annotated tags on the release commit:
+5. Create the three annotated tags on the release commit:
 
    ```sh
-   git tag -s vX.Y.Z              -m "vX.Y.Z"
-   git tag -s x/config/vX.Y.Z     -m "x/config/vX.Y.Z"
-   git tag -s x/comparators/vX.Y.Z -m "x/comparators/vX.Y.Z"
+   git tag -a vX.Y.Z              -m "vX.Y.Z"
+   git tag -a x/config/vX.Y.Z     -m "x/config/vX.Y.Z"
+   git tag -a x/comparators/vX.Y.Z -m "x/comparators/vX.Y.Z"
    ```
 
-6. Push all three tags together:
+6. Push `main`, then all three tags together:
 
    ```sh
    git push origin vX.Y.Z x/config/vX.Y.Z x/comparators/vX.Y.Z
