@@ -286,7 +286,7 @@ func (r *Report) Verify() error {
 	}
 
 	// NotVerified must name every operator-disabled phase. Without this
-	// mandatory cross-check was silently deletable
+	// mandatory cross-check must not be silently deletable
 	// (review-gate probe): per-case rows said Disabled while the top-level
 	// claim of coverage loss had been truncated away.
 	for i := range r.Cases {
@@ -297,7 +297,7 @@ func (r *Report) Verify() error {
 			named := false
 			// Match the QUOTED id: the emitted line writes %q, so the closing
 			// quote anchors the match and "settle_wait" cannot satisfy a line
-			// about "settle_wait_extended" — the re-review proved the bare
+			// about "settle_wait_extended" — a bare
 			// substring version accepted exactly that.
 			quoted := fmt.Sprintf("%q", string(po.ID))
 			for _, line := range r.NotVerified {

@@ -620,7 +620,7 @@ func newSessionID() string {
 // happens is evidence in the CaseReport, because a batch must survive any
 // single case.
 func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
-	// Named result on purpose: review proved the previous
+	// Named result on purpose: the previous
 	// `cr := ...; defer func() { cr.Finished = ... }(); return cr` wrote to
 	// the local AFTER the return value was copied out — dead code, masked in
 	// the determinism tests because they normalise Finished away. A deferred
@@ -759,14 +759,13 @@ func (r *Runner) teardownFixtures(built []Fixture, run *Run, cr *CaseReport) {
 }
 
 // runOneSetup contains a panicking Setup for the same reason runOneTeardown
-// does — found by symmetry while fixing the teardown gap: the other side
-// of the fixture lifecycle had the identical hole.
+// does — both sides of the fixture lifecycle need the identical containment.
 func runOneSetup(ctx context.Context, f Fixture, run *Run) error {
 	return contain("setup", func() error { return f.Setup(ctx, run) })
 }
 
 // runOneTeardown contains a panicking Teardown exactly as runOnePhase contains
-// a panicking phase. Review proved the asymmetry: a consumer bug in
+// a panicking phase. The asymmetry matters: a consumer bug in
 // Teardown propagated out of Start uncaught and aborted every remaining case
 // — contradicting runCase's own "a batch must survive any single case".
 func runOneTeardown(ctx context.Context, f Fixture, run *Run) error {

@@ -13,7 +13,7 @@ import (
 )
 
 // All evidence was held in memory for the whole session, unbounded —
-// 1.8 GiB peak at 1k cases × 30 phases × 5 obs × 100 rows, an OOM wall in a
+// 1.8 GiB peak at 1k cases × 30 phases × 5 obs × 100 rows would be an OOM wall in a
 // 2Gi CI container. Two reliefs, both explicit: a per-case observation cap
 // whose truncation is LOUD (a silent cap is a default, and defaults are how
 // evidence disappears), and a case observer that streams each finished

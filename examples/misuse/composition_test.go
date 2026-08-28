@@ -101,7 +101,7 @@ func TestWhenWritingIsAViolationInBothDirections(t *testing.T) {
 // --- teardown stages may not Put -----------------------------------------
 
 func TestGroupTeardownPutFailsTheGroupRowItself(t *testing.T) {
-	// Re-proven from outside the engine: the lifecycle's own
+	// Proven from outside the engine: the lifecycle's own
 	// Teardown returns nil, but the smuggled Put must fail the GROUP ROW
 	// independently — never a Passed group row beside a quiet violation.
 	g := phase.Group{ID: "g", Members: []phase.ID{"m"}, Lifecycle: &wonkyLifecycle{

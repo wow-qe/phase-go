@@ -198,8 +198,8 @@ func (c *runCore) mustBeOpen(what string, phase ID) {
 
 // drain seals the ledger and returns its contents under ONE lock
 // acquisition: no straggler can slip evidence in between "the verdict reads
-// the ledger" and "the ledger closes" (architecture-review residual on the
-// A1 acceptance). Recording after drain panics via mustBeOpen.
+// the ledger" and "the ledger closes". Recording after drain panics via
+// mustBeOpen.
 func (c *runCore) drain() (results []attributedResult, obs []Observation, errs []attributedError, flakes []string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -11,12 +11,12 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Shipping bugs pinned before any refactor touches the machinery.
+// Containment and refusal guarantees, pinned.
 
 func TestObserverPanicIsContainedAndSurfaced(t *testing.T) {
-	// A panicking consumer callback killed the WHOLE session. Now:
-	// contained, the run completes, and the degradation is LOUD - on the
-	// session and in the report - never silently detached.
+	// A panicking consumer callback is contained: the run completes, and
+	// the degradation is LOUD - on the session and in the report - never
+	// silently detached.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	WithProgress(func(ProgressEvent) { panic("dashboard bug") })(r)
 	WithCaseObserver(func(CaseReport) { panic("poster bug") })(r)
@@ -45,9 +45,8 @@ func TestObserverPanicIsContainedAndSurfaced(t *testing.T) {
 }
 
 func TestHookPutIsRestrictedToDeclaredProduces(t *testing.T) {
-	// Can a Before hook Put a
-	// key the phase never declared?
-	key := v0SmuggleKey
+	// A Before hook must not Put a key the phase never declared.
+	key := smuggleKey
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&hookedPhase{stubPhase: stubPhase{id: "smuggler"}, // declares NO Produces
 			before: func(_ context.Context, run *Run) error {
@@ -67,9 +66,9 @@ func TestHookPutIsRestrictedToDeclaredProduces(t *testing.T) {
 }
 
 func TestWhenRecordIsRefusedNotFolded(t *testing.T) {
-	// The fold corrected the OUTCOME but the phantom Result stayed in
-	// the evidence, counted, indistinguishable from real Run evidence.
-	// Preventive: the record never lands.
+	// Refusal is preventive, not corrective: a condition's record never
+	// lands in the evidence at all - a folded-but-counted phantom would be
+	// indistinguishable from real Run evidence.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&conditionalPhase{stubPhase: stubPhase{id: "leaky"},
 			when: func(_ context.Context, run *Run) (bool, string, error) {
@@ -108,4 +107,4 @@ func TestNegativeConcurrencyKnobsAreRefused(t *testing.T) {
 	}
 }
 
-var v0SmuggleKey = Declare[string]("v0_smuggle_key")
+var smuggleKey = Declare[string]("smuggle_key")

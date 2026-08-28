@@ -404,9 +404,8 @@ func phaseOutcome(t *testing.T, cr CaseReport, id ID) PhaseOutcome {
 // --- review-gate findings, pinned before fixing -----------------------------
 
 // Package-level on purpose: Declare panics on re-registration BY DESIGN, and a
-// Declare inside a test body panics under -count=2 — the re-review caught this
-// test aborting the whole binary on its second run, violating the convention
-// keys_run_test.go already established.
+// Declare inside a test body panics under -count=2, aborting the whole binary
+// on its second run — the convention keys_run_test.go already established.
 var lyingKey = Declare[string]("undeclared_by_anyone")
 
 type panickyTeardown struct{}

@@ -92,7 +92,7 @@ type Config struct {
 	// multiply - flake rates can RISE from backend contention.
 	MaxCaseConcurrency int
 	// MaxObservationsPerCase bounds evidence retention (unbounded
-	// retention was an OOM wall in CI containers). Zero means unlimited.
+	// retention is an OOM wall in CI containers). Zero means unlimited.
 	// Truncation is LOUD: the report carries a marker observation naming
 	// exactly how many observations were dropped — a silent cap is a
 	// default, and defaults are how evidence disappears.

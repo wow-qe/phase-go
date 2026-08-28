@@ -76,8 +76,8 @@ func redactCasePattern(cr *CaseReport, re *regexp.Regexp) {
 	{
 		cr.Reason = scrub(cr.Reason)
 		// land() copies the raw adapter error into each
-		// PhaseOutcome.Reason — the same string scrubbed in Errors survived
-		// here, duplicated, until this loop existed.
+		// PhaseOutcome.Reason — the same string scrubbed in Errors would
+		// otherwise survive here, duplicated.
 		for pi := range cr.Phases {
 			cr.Phases[pi].Reason = scrub(cr.Phases[pi].Reason)
 		}
@@ -97,7 +97,7 @@ func redactCasePattern(cr *CaseReport, re *regexp.Regexp) {
 			// Free text
 			// is free text at ANY depth. A bare-string Expected/Actual leaked
 			// first; then the flagship example showed a secret riding inside a
-			// slice element or map key/value survived the bare-string check.
+			// slice element or map key/value must not slip past a bare-string check.
 			// scrubDeep walks the whole value.
 			if v.Expected != nil {
 				v.Expected = scrubDeep(v.Expected, scrub)

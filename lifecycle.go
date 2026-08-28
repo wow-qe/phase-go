@@ -7,7 +7,7 @@ import "fmt"
 
 // The typed lifecycle machine — per-entity scoped by the
 // engine lens's ruling: a checked machine ONLY where a real bug class
-// exists. groupRun is that entity (a TOCTOU near-miss found in review); runCore's
+// exists. groupRun is that entity (a TOCTOU-prone spot); runCore's
 // sealed stays the named one-way-gate idiom; linear single-goroutine flows
 // stay linear. Transition tables are DATA: the docs render from them.
 

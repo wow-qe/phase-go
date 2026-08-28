@@ -165,8 +165,7 @@ func TestJSONCarriesTheSchemaAndTheEvidence(t *testing.T) {
 		`"observations"`,
 		`"value"`,
 		// Per-phase result counts must reach the ARTIFACT, not just the
-		// in-memory struct — the report is the product (an earlier version
-		// asserted only against the Go struct).
+		// in-memory struct — the report is the product.
 		`"results_recorded"`,
 	} {
 		if !strings.Contains(body, want) {
@@ -355,10 +354,10 @@ func TestCurtailmentSurvivesSerialisation(t *testing.T) {
 }
 
 func TestSchemaSurfaceIsFullyTagged(t *testing.T) {
-	// The schema surface used to live in five hand-maintained shadow
+	// The schema surface must not live in hand-maintained shadow
 	// structs with no compiler link to their sources — a field added to the
 	// Go struct and forgotten in the shadow silently dropped from JSON
-	// (exactly how Results and Curtailed shipped invisible). The
+	// (that is how fields ship invisible). The
 	// tags now live ON the real structs; this test is the mechanical link:
 	// every exported field of every schema-surface struct must carry an
 	// explicit json tag, so an untagged addition fails here instead of

@@ -14,7 +14,7 @@ import (
 )
 
 // The group lifecycle is a typed, checked state
-// machine (the one entity with a documented TOCTOU near-miss), and the
+// machine (the one entity with a documented TOCTOU-prone spot), and the
 // assembly line is pinned as a TRACE — exact in sequential mode, multiset +
 // partial-order under concurrency.
 

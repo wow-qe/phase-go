@@ -107,9 +107,9 @@ func TestUnredactableValueIsReplacedWhole(t *testing.T) {
 }
 
 func TestRedactMatchingScrubsPhaseOutcomeReasons(t *testing.T) {
-	// A regression this test pins: land() copies the RAW adapter
+	// land() copies the RAW adapter
 	// error into PhaseOutcome.Reason, and no redaction path visited it — the
-	// same DSN scrubbed in cr.Errors survived, duplicated, in cr.Phases.
+	// same DSN scrubbed in cr.Errors would otherwise survive, duplicated, in cr.Phases.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			return fmt.Errorf("postgres://qe:s3cr3t@db.internal:5432/x: connection refused")
@@ -301,7 +301,7 @@ func TestEveryStringCarrierOnCaseReportIsScrubbed(t *testing.T) {
 func TestRedactMatchingReachesStructuredEvidence(t *testing.T) {
 	// Found by the flagship example (the canary doing its job): a secret
 	// riding INSIDE structured evidence — a slice element, a map key or
-	// value, an EntityRef — survived RedactMatching, which only scrubbed
+	// value, an EntityRef — must not slip past RedactMatching via
 	// bare-string carriers. Free text is free text at any depth.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {

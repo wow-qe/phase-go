@@ -272,7 +272,7 @@ func TestDuplicateJSONKeysRefusedOnCapture(t *testing.T) {
 }
 
 func TestValueEqualToKeyIsNotADuplicate(t *testing.T) {
-	// Guard against a toggle bug an earlier fix shipped: a string
+	// Guard against a toggle bug: a string
 	// VALUE equal to a key name must not read as a duplicate key.
 	ok := []byte(`{"schema_version":"1","cases":[{"id":"status","status":"status","phases":[{"id":"p","status":"passed"}],"results":[{"phase":"p","result":{"name":"status","passed":true,"comparisons":1}}]}],"summary":{},"not_verified":[]}`)
 	if _, err := captureSnapshot(ok); err != nil {
@@ -282,7 +282,7 @@ func TestValueEqualToKeyIsNotADuplicate(t *testing.T) {
 
 func TestWeakenedAssertionIsDrift(t *testing.T) {
 	// A check that drops from 3 comparisons to 1 —
-	// two assertions deleted — has the same name/entity/passed and used to
+	// two assertions deleted — has the same name/entity/passed and would
 	// compare "snapshot clean". The snapshot must key on comparisons too.
 	strong := []byte(`{"schema_version":"1","cases":[{"id":"c","status":"passed","phases":[{"id":"p","status":"passed"}],"results":[{"phase":"p","result":{"name":"check","passed":true,"comparisons":3}}]}],"summary":{},"not_verified":[]}`)
 	weak := []byte(`{"schema_version":"1","cases":[{"id":"c","status":"passed","phases":[{"id":"p","status":"passed"}],"results":[{"phase":"p","result":{"name":"check","passed":true,"comparisons":1}}]}],"summary":{},"not_verified":[]}`)

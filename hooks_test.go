@@ -299,7 +299,7 @@ func TestSettleDelayRunsBeforeBefore(t *testing.T) {
 }
 
 func TestBeforeViolationKeepsTheErrorChannelClean(t *testing.T) {
-	// A regression this test pins: the violation path also wrote
+	// The violation path must not also write
 	// cr.Errors - the field whose documented purpose is environment trouble
 	// - so an on-call filter on len(Errors) paged for a clean product
 	// defect. A recorded violation is a product fact; only an UNRECORDED

@@ -165,7 +165,7 @@ func TestPriorEvidenceIsALiveScanNotAStatusCache(t *testing.T) {
 }
 
 func TestWhenThatRecordsWhileDecliningIsErroredNotSilent(t *testing.T) {
-	// A regression this test pins: a When that Records before
+	// A When that Records before
 	// declining produced a NotApplicable row carrying phantom evidence,
 	// invisible to Verify. A condition reads the record; it does not write
 	// it — folding to Errored keeps the row and the evidence consistent.
@@ -184,7 +184,7 @@ func TestWhenThatRecordsWhileDecliningIsErroredNotSilent(t *testing.T) {
 	} else {
 		t.Fatalf("outcome = %+v — phantom evidence under a did-not-run row", po)
 	}
-	// Strengthened from fold-and-count to preventive refusal: the
+	// Preventive refusal, not fold-and-count: the
 	// phantom never lands at all (see TestWhenRecordIsRefusedNotFolded).
 	if po.Status != Errored || po.Stage != "condition" || po.Results != 0 {
 		t.Fatalf("outcome = %+v, want Errored/condition with the phantom refused", po)

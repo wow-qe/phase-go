@@ -16,7 +16,7 @@ import (
 // wastes time.
 //
 // The budget comes from the current phase's resolved Timing — attempts per
-// case, never a shared wall clock (a shared ceiling once starved nine cases
+// case, never a shared wall clock (a shared ceiling starves cases
 // that were merely scheduled late). The semantics, one per outcome:
 //
 //   - done            → the value, nil. Sleeps happen BETWEEN attempts only.

@@ -13,7 +13,7 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// A 20×15s settle used to be silent for five minutes — indistinguishable
+// Without a heartbeat, a 20×15s settle is silent for five minutes — indistinguishable
 // from a hang. Progress events fire around each phase, on the Start
 // goroutine, so an operator watching stderr sees phases begin and land.
 

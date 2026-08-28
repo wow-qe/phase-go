@@ -13,7 +13,7 @@ import (
 
 // WaitUntil is the reason phases never sleep: a fixed sleep is simultaneously
 // too slow on a fast machine and too short on a loaded one. The budget is in
-// ATTEMPTS, per case (a shared wall-clock budget once starved nine cases that
+// ATTEMPTS, per case (a shared wall-clock budget starves cases that
 // were merely scheduled late), and exhaustion is a failure whose reason names
 // the budget — never a timeout swallowed as "nothing found".
 

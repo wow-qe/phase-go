@@ -162,7 +162,7 @@ func TestARealFailureOutranksAFlake(t *testing.T) {
 }
 
 func TestCancellationMidToleranceIsErroredNotFailed(t *testing.T) {
-	// A regression this test pins: cancellation during the retry
+	// Cancellation during the retry
 	// loop recorded a fabricated final failing result, so an operator kill
 	// (CI timeout, deploy interrupt) read as a product defect — inverting
 	// "cancellation is Errored, never Failed". An interrupted tolerance is

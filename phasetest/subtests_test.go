@@ -14,7 +14,7 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// One Start() used to collapse N cases into one Go test result — `go
+// Without this bridge, one Start() collapses N cases into one Go test result — `go
 // test -run` could not target a case and JUnit saw "1 test". RunAsSubtests
 // bridges each CaseReport to its own subtest; ReportCaseOutcome is the
 // bridge's per-case verdict logic, exported so it is testable against a

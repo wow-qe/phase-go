@@ -12,7 +12,7 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Evidence used to be stamped by reading a mutable "current phase"
+// Evidence must never be stamped by reading a mutable "current phase"
 // field at record time. The mutex made that race-clean and still WRONG: any
 // recording that outlives its phase — a goroutine, a stashed *Run, a future
 // parallel scheduler — was attributed to whichever phase happened to be
@@ -55,7 +55,7 @@ func TestEvidenceIsAttributedToTheRecordingPhaseNotTheCurrentOne(t *testing.T) {
 
 func TestRecordingAfterTheCaseCompletesPanicsLoudly(t *testing.T) {
 	// C4's other half: evidence recorded after the case's verdict was derived
-	// used to vanish into a buffer nobody would ever read — a silent drop.
+	// must not vanish into a buffer nobody would ever read — a silent drop.
 	// Mirroring testing.T's choice for Log-after-test: a loud panic beats a
 	// silently incomplete report.
 	var escaped *Run

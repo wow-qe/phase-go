@@ -30,7 +30,7 @@ type checkoutSystem struct {
 	// catalogSeeds is a LEASE COUNT, not a boolean: under MaxCaseConcurrency
 	// several cases hold the catalog at once, and a boolean fixture is the
 	// classic non-scope-partitioned trap — one case's teardown clobbers a
-	// concurrent case's precondition (a ~2% race caught in review:
+	// concurrent case's precondition (a rare race:
 	// billing-report failing submit's Before under concurrency). Each
 	// case's fixture takes and releases its own lease instead.
 	catalogSeeds int
