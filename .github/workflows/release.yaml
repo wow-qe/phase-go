@@ -39,11 +39,12 @@ jobs:
         # tags. A lightweight tag has no tag OBJECT, so this check enforces
         # the annotated half mechanically; signature verification needs the
         # signer's key and stays a documented manual step in the runbook.
-        run: |
-          git fetch --no-tags origin "+refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME" 2>/dev/null || true
-          [[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]
+        # fetch-depth: 0 above already brought every ref; no network here
+        # (checkout runs with persist-credentials: false, so a fetch would
+        # have no auth).
+        run: '[[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]'
       - name: Require release commit on main
-        run: git fetch --no-tags origin main && git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - name: Verify lockstep tags on this commit
         # Lockstep, enforced not just documented: the SAME version must be tagged
         # for the root and BOTH extension modules, all pointing at the SAME
@@ -51,7 +52,6 @@ jobs:
         # a partial release that claims lockstep.
         shell: bash
         run: |
-          git fetch --tags --force origin
           version="${GITHUB_REF_NAME##*/}"
           for t in "$version" "x/config/$version" "x/comparators/$version"; do
             sha="$(git rev-list -n1 "refs/tags/$t" 2>/dev/null)" || { echo "missing lockstep tag: $t"; exit 1; }
