@@ -12,9 +12,9 @@ import (
 )
 
 // Report tampering: every hand-corruption of an honest report must be
-// caught by Verify() as a FrameworkError pinned by its Invariant — and a
-// report that fails Verify maps to exit 3 ("do not trust these numbers"),
-// never a quiet 0 or a misleading 1.
+// caught by Verify() as a FrameworkError identified by its Invariant —
+// and a report that fails Verify maps to exit 3 ("do not trust these
+// numbers"), never a quiet 0 or a misleading 1.
 
 func wantInvariant(t *testing.T, rep *phase.Report, invariant string) {
 	t.Helper()

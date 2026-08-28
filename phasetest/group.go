@@ -42,8 +42,8 @@ func RunGroupTeardown(t testing.TB, g phase.Group, run *phase.Run) error {
 // ConformanceGroup checks a Group declaration against the engine's own
 // preflight rules, so a mis-declared group fails in the consumer's unit
 // tests before it fails at NewRunner: non-empty ID without the reserved
-// ':' character, at least one member, no duplicate members. (Member
-// EXISTENCE is a pipeline fact NewRunner alone can check.)
+// ':' character, at least one member, no duplicate members. (Whether a
+// member exists is a pipeline fact NewRunner alone can check.)
 func ConformanceGroup(t testing.TB, g phase.Group) {
 	t.Helper()
 	if g.ID == "" {

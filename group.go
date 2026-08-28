@@ -10,16 +10,16 @@ import (
 	"sync"
 )
 
-// Group is lifecycle scoped to a named subset of already-declared phases
-// . Pipeline is the plural — the place phases are
-// declared; a Group never declares phases, it references them by ID, so
-// there is exactly one source of truth for what exists.
+// Group is lifecycle scoped to a named subset of already-declared phases.
+// Pipeline is the plural — the place phases are declared; a Group never
+// declares phases, it references them by ID, so there is exactly one
+// source of truth for what exists.
 //
 // Semantics are DAG-causal, never positional (positions stop existing under
 // parallelism): Setup causally precedes every member — it is a synthetic
 // dependency node, so pruning, handoff validation and ordering ride the
 // existing machinery — and Teardown is a completion barrier that fires once
-// every member has a landed outcome of ANY kind, always if Setup was
+// every member has a landed outcome of any kind, always if Setup was
 // attempted, on a detached context (a cancelled run must not leak the
 // resources Setup acquired into the next one). Setup never fires for a case
 // in which no member reaches execution; the group then reports
@@ -58,7 +58,8 @@ func teardownID(g ID) ID { return ID("group:" + string(g) + ":teardown") }
 
 // validateGroups refuses mis-declared groups at NewRunner and returns the
 // per-runner group table. Every refusal is a typed LoadError: a group typo
-// that silently did nothing would be the Settings.Sub defect reborn.
+// that silently did nothing would be indistinguishable from a group that
+// was never wired up.
 func (r *Runner) validateGroups(groups []Group) error {
 	for id := range r.byID {
 		if strings.Contains(string(id), ":") {
@@ -108,7 +109,7 @@ type groupRun struct {
 
 	mu        sync.Mutex
 	remaining int
-	state     *machine[groupState] // the checked lifecycle (was two booleans)
+	state     *machine[groupState] // the checked lifecycle
 	setupErr  error
 	tearErr   error
 }
@@ -135,10 +136,10 @@ func (r *Runner) ensureSetup(ctx context.Context, gr *groupRun, run *Run, caseID
 	if gr.g.Lifecycle != nil {
 		gr.setupErr = runOneSetup(ctx, gr.g.Lifecycle, sv)
 	}
-	// A capability violation during setup is a
-	// setup failure even when the consumer's function returned nil - the
-	// GroupOutcome must say which group had trouble without the reader
-	// cross-referencing the case's error arrays.
+	// A capability violation during setup is a setup failure even when the
+	// consumer's function returned nil - the GroupOutcome must say which
+	// group had trouble without the reader cross-referencing the case's
+	// error arrays.
 	if gr.setupErr == nil && sv.capViolations > 0 {
 		gr.setupErr = fmt.Errorf("setup used a capability its stage does not have")
 	}

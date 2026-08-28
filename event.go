@@ -5,25 +5,25 @@ package phase
 
 import "time"
 
-// The unified event stream: ONE read-only, ordered,
-// retrospective stream is the consumer's lifecycle contract — the closed
-// set below, nothing else. Delivery guarantees, pinned (not folklore):
+// The unified event stream: one read-only, ordered, retrospective stream is
+// the consumer's lifecycle contract — the closed set below, nothing else.
+// Delivery guarantees:
 //
-//  1. Synchronous and SERIALIZED: the callback is never entered
+//  1. Synchronous and serialized: the callback is never entered
 //     concurrently, under either concurrency knob.
 //  2. Read-only payloads: value types or deep clones; an observer cannot
 //     alter outcomes, by construction.
-//  3. REDACTED at emission: payloads carrying evidence or error strings
+//  3. Redacted at emission: payloads carrying evidence or error strings
 //     pass the same RedactKeys/RedactPatterns as the report — the live
 //     stream is safe by default, not just the artifact.
-//  4. Pairing is TOTAL: every Started has exactly one Finished and vice
+//  4. Pairing is total: every Started has exactly one Finished and vice
 //     versa — PhaseStarted fires for every phase, gate-declined ones
 //     included (Reached says whether it actually executed), so span
 //     pairing never orphans.
 //  5. Emission time is never charged against Timing budgets.
 //  6. Observer panics are contained, surfaced on Session.ObserverErrors()
 //     and the report's Diagnostics — never fatal, never a silent detach.
-//  7. WithProgress and WithCaseObserver are frozen PROJECTIONS of this
+//  7. WithProgress and WithCaseObserver are frozen projections of this
 //     stream; new capability lands here.
 type EventKind int
 
@@ -112,7 +112,7 @@ type SessionStartedEvent struct {
 }
 
 // SessionFinishedEvent fires when Start is about to return. Deliberately
-// NOT a Summary duplicate — the report owns the math.
+// not a Summary duplicate — the report owns the math.
 type SessionFinishedEvent struct {
 	eventBase
 	SessionID string
@@ -148,7 +148,7 @@ type GroupEvent struct {
 	Err     string // redacted; only on *Finished kinds
 }
 
-// PhaseStartedEvent fires for EVERY phase — pairing is total. Reached says
+// PhaseStartedEvent fires for every phase — pairing is total. Reached says
 // whether the phase actually executes (false: it was gate-declined and its
 // PhaseFinished follows immediately); Timing is resolved only when Reached.
 type PhaseStartedEvent struct {

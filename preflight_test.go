@@ -10,13 +10,12 @@ import (
 	"time"
 )
 
-// Preflight is the difference between learning at second 3 and at second 610:
-// every way a suite can be mis-declared is refused here, with a machine-
-// readable code, before anything executes. One test per code — the definition
-// of done says every LoadCode is provoked through this door.
+// Preflight refuses every way a suite can be mis-declared, with a machine-
+// readable code, before anything executes. One test per code exercises
+// every LoadCode through this door.
 //
-// (One exception, recorded: StatusUnparsable belongs to the consumer's loader
-// — ParseStatus refuses it there, tested in phase_test.go — because by the
+// (One exception: StatusUnparsable belongs to the consumer's loader —
+// ParseStatus refuses it there, tested in phase_test.go — because by the
 // time a Case reaches Preflight its status is already typed.)
 
 // stubPhase implements Interface with declared wiring and no behaviour.
@@ -119,10 +118,10 @@ func TestDependencyCycleRefused(t *testing.T) {
 }
 
 func TestKeyNeverProducedRefused(t *testing.T) {
-	// settle requires a key produced only by a phase it does NOT depend on:
+	// settle requires a key produced only by a phase it does not depend on:
 	// with no ordering guarantee the value may not exist when settle runs, so
-	// the wiring is refused — this is the load-time cure for the zero-value
-	// handoff reads that produced the source framework's worst defect chains.
+	// the wiring is refused at load time rather than risking a zero-value
+	// read at run time.
 	_, err := NewRunner(NewPipeline(
 		&stubPhase{id: "discover", produces: []KeyID{"request_id"}},
 		&stubPhase{id: "settle", requires: []KeyID{"request_id"}}, // no dep!
@@ -189,7 +188,7 @@ func TestConfigTimingOverridesFieldWise(t *testing.T) {
 }
 
 func TestDependenciesUnionCodeAndConfig(t *testing.T) {
-	// Code declares a phase's true prerequisites; config may ADD ordering
+	// Code declares a phase's true prerequisites; config may add ordering
 	// (an operator serialising two phases) but can never remove one — a
 	// config that could delete a code-declared dependency could reorder a
 	// pipeline into nonsense without touching a line of it.
@@ -270,9 +269,9 @@ func TestDefaultScopesNeverCollide(t *testing.T) {
 }
 
 func TestWithScopeAllocatorInjectsTheConsumersAllocator(t *testing.T) {
-	// scope.go documented consumer allocators; nothing injected one. Found by
-	// the example build - the doc promised an extension point the API lacked,
-	// which is the "documented, read by code, and inert" defect shape again.
+	// WithScopeAllocator must wire a caller-provided allocator into
+	// Preflight; documenting an extension point without a working option
+	// to set it leaves the API inert.
 	called := 0
 	r, err := NewRunner(NewPipeline(&stubPhase{id: "submit"}),
 		Config{Defaults: validTiming()},

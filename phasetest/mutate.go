@@ -12,12 +12,12 @@ import (
 )
 
 // Gutted returns a phase with inner's identity and wiring — ID, DependsOn,
-// Requires, AppliesTo — whose Run records NOTHING and returns nil. It is the
+// Requires, AppliesTo — whose Run records nothing and returns nil. It is the
 // mutation gate as a library: replace an assertion phase with
 // Gutted(phase) and re-run the suite. If the suite stays green, nothing was
 // testing what that phase asserts, and the suite's green is not evidence.
 //
-// Gutted REFUSES (panics with a clear message) a phase whose Produces() is
+// Gutted refuses (panics with a clear message) a phase whose Produces() is
 // non-empty: gutting a producer would starve dependents into loud, unrelated
 // failures, and the gate must measure assertion coverage, not wiring.
 func Gutted(inner phase.Interface) phase.Interface {
@@ -58,8 +58,8 @@ var _ phase.Interface = guttedPhase{}
 // AlwaysPass is the second mutation gate: it runs the wrapped phase for real
 // — wiring, handoffs and all — but flips every result it records into a pass
 // (name, entity and evidence preserved; the verdict forced). Where Gutted
-// answers "does the suite notice a phase that records NOTHING?", AlwaysPass
-// answers "does this case's verdict actually ride on THIS phase's
+// answers "does the suite notice a phase that records nothing?", AlwaysPass
+// answers "does this case's verdict actually ride on this phase's
 // comparisons?": wrap one phase, re-run a case that must fail, and if it
 // flips green, that phase's judgement was the one doing the work.
 //
@@ -85,7 +85,7 @@ func (a alwaysPassPhase) AppliesTo(c phase.Case, cfg phase.Config) phase.Applica
 }
 
 // Before forwards the wrapped phase's Before (if any), installing the flip
-// FIRST so a hook-recorded failure cannot escape the mutation. After
+// first so a hook-recorded failure cannot escape the mutation. After
 // forwards likewise; the runner discovers both through the wrapper, so a
 // hook-bearing phase under AlwaysPass still runs its full arc.
 func (a alwaysPassPhase) Before(ctx context.Context, r *phase.Run) error {

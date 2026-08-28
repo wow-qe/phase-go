@@ -11,12 +11,11 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Evidence renders in
-// deterministic TOPOLOGICAL order, not completion order. Sequentially the
-// two coincide phase-by-phase; the gap A1 left open is evidence recorded
-// through a stashed handle while a LATER phase runs — append order put it
-// under the later phase's chronology, and under real concurrency append
-// order is lock-acquisition order, which silently breaks invariant 6.
+// Evidence renders in deterministic topological order, not completion
+// order. Sequentially the two coincide phase-by-phase; they diverge when
+// evidence is recorded through a stashed handle while a later phase runs —
+// append order would put it under the later phase's chronology, and under
+// real concurrency append order is lock-acquisition order, not topology.
 
 func TestEvidenceRendersInTopologicalOrderNotCompletionOrder(t *testing.T) {
 	var fromA *Run

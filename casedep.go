@@ -13,17 +13,18 @@ import (
 
 func errorsPkgAs(err error, target any) bool { return errors.As(err, target) }
 
-// Case-level dependencies: an optional interface, so
-// every existing Case implementation compiles unchanged. Execution follows
-// the case DAG — a dependency on a later-declared case is normal, exactly
-// as phases decoupled execution order from declaration order — while the
-// REPORT keeps declaration order: that is Session.Cases()'s shipped
-// contract, preserved by indexed writes.
+// CaseDependency is an optional interface, so every existing Case
+// implementation compiles unchanged. Execution follows the case DAG — a
+// dependency on a later-declared case is normal, decoupling execution order
+// from declaration order exactly as phase dependencies do — while the
+// report keeps declaration order: that is Session.Cases()'s contract,
+// preserved by indexed writes.
 //
-// Case-level DATA handoff is deliberately absent and stays absent: it is
-// the keys.go defect one level up (shared mutable state across isolation
-// boundaries). The sanctioned path already exists at the consumer layer —
-// read run A's Report(), build run B's cases from it, call Start again.
+// Case-level data handoff is deliberately absent and stays absent: sharing
+// mutable state across isolation boundaries reintroduces the hazard typed
+// keys exist to prevent. The sanctioned path already exists at the
+// consumer layer — read run A's Report(), build run B's cases from it,
+// call Start again.
 type CaseDependency interface {
 	DependsOnCases() []CaseRequirement
 }
@@ -32,7 +33,7 @@ type CaseDependency interface {
 // verdicts satisfy this dependent. Acceptable is an explicit set — Status
 // has no ordering, so there is no "at least Passed"; "Passed or Flaked" is
 // spelled out (a prerequisite that passed on a tolerated retry is a common,
-// legitimate acceptance). An EMPTY Acceptable means ordering only: any
+// legitimate acceptance). An empty Acceptable means ordering only: any
 // outcome satisfies.
 type CaseRequirement struct {
 	CaseID     string
@@ -58,9 +59,9 @@ func caseDeps(c Case) []CaseRequirement {
 }
 
 // validateCaseDeps refuses unknown targets and cycles at Preflight — cases
-// exist only there (the A5 division: NewRunner is pipeline-structural,
-// Preflight is case-level). A dependency whose target is not in the given
-// set is refused LOUDLY even though it may exist elsewhere (a tag selector
+// exist only there (NewRunner validates pipeline structure; Preflight
+// validates cases). A dependency whose target is not in the given set is
+// refused loudly even though it may exist elsewhere (a tag selector
 // filtered it out): a structural dependency crossing a selection boundary
 // is a suite-authoring bug, and soft-skipping it would make the selected
 // suite report fine while structurally broken.
@@ -95,8 +96,8 @@ func validateCaseDeps(cases []Case) error {
 }
 
 // caseOrder returns execution order: declaration order when no case
-// declares dependencies (byte-identical behaviour to before this feature),
-// case-DAG topological order otherwise. Deterministic either way.
+// declares dependencies, case-DAG topological order otherwise.
+// Deterministic either way.
 func caseOrder(cases []Case) []int {
 	hasDeps := false
 	byID := map[string]int{}

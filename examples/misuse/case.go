@@ -46,7 +46,7 @@ func (c *checkoutCase) DependsOnCases() []phase.CaseRequirement { return c.deps 
 
 // loadCases builds the suite from the manifest: registry-resolved
 // fixtures, consumer wrapping, and the one case dependency the domain
-// declares (billing-report waits for the multi-entity flow to PASS).
+// declares (billing-report waits for the multi-entity flow to pass).
 func loadCases(sys *checkoutSystem, manifest []byte) ([]phase.Case, error) {
 	specs, err := config.ParseCases(manifest)
 	if err != nil {

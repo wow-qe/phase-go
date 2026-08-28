@@ -1,10 +1,9 @@
 // Copyright 2026 The Phase Contributors
 // SPDX-License-Identifier: MIT
 
-// Package comparators is the comparison boilerplate every consumer was
-// about to hand-roll, built once on the result package's invariant: a
-// comparison over nothing is a failure with a reason, never a pass, and a
-// failing result names what it saw.
+// Package comparators is common comparison logic built on the result
+// package's invariant: a comparison over nothing is a failure with a
+// reason, never a pass, and a failing result names what it saw.
 package comparators
 
 import (
@@ -19,8 +18,8 @@ import (
 
 // ContainsAll passes when every wanted element appears in got (order-free,
 // duplicates tolerated). A failure names exactly what is missing; wanting
-// nothing is zero comparisons and therefore a failure — the founding rule,
-// held in every comparator.
+// nothing is zero comparisons and therefore a failure, as in every
+// comparator here.
 func ContainsAll[T comparable](name string, want, got []T) result.Result {
 	if len(want) == 0 {
 		return result.Failed(name, "containing all of the empty set is zero comparisons; declare what must be present").
@@ -57,9 +56,9 @@ func ValueMatch(name string, want, got any) result.Result {
 }
 
 // EachEntity runs check once per entity and attributes each result to its
-// entity. ZERO entities yields one failing result: "checked every entity"
-// over an empty set is exactly the all([])-is-true defect this library was
-// founded against.
+// entity. Zero entities yields one failing result: "checked every entity"
+// over an empty set is the all([])-is-true defect this package's
+// zero-comparisons-fail invariant exists to prevent.
 func EachEntity(name string, entities []result.EntityRef, check func(result.EntityRef) result.Result) []result.Result {
 	if len(entities) == 0 {
 		return []result.Result{result.Failed(name,
@@ -73,13 +72,13 @@ func EachEntity(name string, entities []result.EntityRef, check func(result.Enti
 }
 
 // Unchanged asserts a no-effect expectation: after must equal before. The
-// name should say what was NOT supposed to happen ("balance unchanged").
+// name should say what was not supposed to happen ("balance unchanged").
 func Unchanged(name string, before, after any) result.Result {
 	return ValueMatch(name, before, after)
 }
 
 // PollCompare fetches until the value equals want, under the current
-// phase's WaitUntil budget. Budget exhaustion is a FAILING RESULT carrying
+// phase's WaitUntil budget. Budget exhaustion is a failing result carrying
 // the last observed value and the budget — the poll concluded "still
 // wrong", which is a judgement — while a transport error or cancellation
 // returns as the error it is (poll, tolerance and transport retries

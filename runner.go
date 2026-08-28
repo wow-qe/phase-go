@@ -66,10 +66,8 @@ func WithCaseObserver(f func(CaseReport)) RunnerOption {
 	return func(r *Runner) { r.observer = f }
 }
 
-// WithScopeAllocator substitutes the consumer's scope allocation. scope.go
-// documented this capability before anything injected it — the "documented,
-// read by nothing, and inert" defect shape — found while building the
-// example, fixed with this option.
+// WithScopeAllocator substitutes the consumer's scope allocation for the
+// default crypto/rand generator, for domains that constrain identifiers.
 func WithScopeAllocator(a ScopeAllocator) RunnerOption {
 	return func(r *Runner) {
 		if a != nil {
@@ -106,9 +104,8 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 		}
 	}
 
-	// Settings.Sub was decoded and read by nothing — the inert-mechanism
-	// defect. It is superseded by Group and refused LOUDLY: config that
-	// still says sub: fails here, never silently no-ops.
+	// Settings.Sub is superseded by Group and refused loudly: config that
+	// still says sub: fails here, rather than silently doing nothing.
 	for id, st := range cfg.Phases {
 		if len(st.Sub) > 0 {
 			return nil, &LoadError{Code: SettingsSubRemoved, Subject: string(id),
@@ -117,7 +114,7 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 	}
 
 	// Effective dependencies: code ∪ config. Code declares a phase's true
-	// prerequisites; configuration may ADD ordering (an operator serialising
+	// prerequisites; configuration may add ordering (an operator serialising
 	// two phases) but can never remove one — a config that could delete a
 	// code-declared dependency could reorder the pipeline into nonsense
 	// without touching a line of it.
@@ -152,7 +149,7 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 	// Groups: validate, then wire each group's synthetic setup node into
 	// the graph — an edge to every member, so pruning, ordering and handoff
 	// validation ride the machinery that already exists. The synthetic node
-	// lives ONLY in the graph structures, never in r.phases (double-execution
+	// lives only in the graph structures, never in r.phases (double-execution
 	// risk).
 	if err := r.validateGroups(p.groups); err != nil {
 		return nil, err
@@ -171,10 +168,10 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 	}
 
 	// Order: deterministic topological sort; cycles and unknown deps refuse.
-	// Nodes come from the PHASE SET, not the deps map: a phase with no
-	// dependencies has no deps entry, and building nodes from the map made
-	// such a phase vanish from the graph - so a dependency ON it read as
-	// unknown. Caught by the clean-suite test on first run.
+	// Nodes come from the phase set, not the deps map: a phase with no
+	// dependencies has no deps entry, and building nodes from the map would
+	// make such a phase vanish from the graph, so a dependency on it would
+	// read as unknown.
 	nodes := make([]dag.Node, 0, len(r.byID)+len(synthetic))
 	for id := range r.byID {
 		ds := r.deps[id]
@@ -299,8 +296,8 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 			Detail: fmt.Sprintf("MaxPhaseConcurrency=%d MaxCaseConcurrency=%d: negative concurrency is not a thing", cfg.MaxPhaseConcurrency, cfg.MaxCaseConcurrency)}
 	}
 
-	// Redaction patterns must compile HERE - a pattern that fails at
-	// paste time is a redaction that silently never ran.
+	// Redaction patterns must compile here — a pattern that fails to
+	// compile at paste time is a redaction that silently never ran.
 	for _, p := range cfg.RedactPatterns {
 		re, err := regexp.Compile(p)
 		if err != nil {
@@ -342,7 +339,7 @@ func (r *Runner) resolvedTiming(id ID) Timing { return r.resolved[id] }
 // the reach set memoized at NewRunner. Read-only: callers must not mutate.
 func (r *Runner) transitiveDeps(id ID) map[ID]bool { return r.reach[id] }
 
-// emitEvent is the ONE dispatch chokepoint of the unified stream:
+// emitEvent is the one dispatch chokepoint of the unified stream:
 // serialized (the callback is never entered concurrently), contained (an
 // observer panic is degraded observability, never a crash), and it also
 // drives the frozen legacy projections so WithProgress/WithCaseObserver
@@ -362,8 +359,8 @@ func (r *Runner) emitEvent(ev Event) {
 // projectLegacy reproduces the historical WithProgress/WithCaseObserver
 // behavior from the stream. Frozen: started only for phases that reach
 // execution; group lifecycle as the pseudo-ID strings; the case observer
-// receives the full report clone (now redacted — the one deliberate
-// improvement, closing the same leak on the legacy surface).
+// receives the full report clone, redacted before delivery — closing the
+// same leak on the legacy surface.
 func (r *Runner) projectLegacy(ev Event) {
 	if r.progress != nil {
 		var pe *ProgressEvent
@@ -438,17 +435,19 @@ func (r *Runner) eventBaseFor(caseID string, k EventKind) eventBase {
 // session-cancellation - deterministically last.
 const lateRank = int(^uint(0) >> 1)
 
-// Start executes the cases, sequentially in the order given, and returns the
-// finished Session. Preflight runs first — defensively, even if the consumer
-// already called it — because executing a mis-declared suite produces a
-// report nobody should trust.
+// Start executes the cases and returns the finished Session. Execution
+// follows the case dependency graph and the configured concurrency
+// (sequential by default); the report always retains declaration order.
+// Preflight runs first — defensively, even if the consumer already called
+// it — because executing a mis-declared suite produces an untrustworthy
+// report.
 //
 // The guarantees, each pinned by a test in runner_test.go:
 //
 //   - phases run in the deterministic dependency order fixed at NewRunner;
 //   - every phase gets exactly one PhaseOutcome per case, whatever happened;
-//   - a failed result fails the case but does NOT stop evidence-gathering;
-//   - a phase error marks the case Errored and prunes only its DEPENDENTS,
+//   - a failed result fails the case but does not stop evidence-gathering;
+//   - a phase error marks the case Errored and prunes only its dependents,
 //     each with a recorded reason — independent phases still run;
 //   - a panic in a consumer phase is contained to its case;
 //   - cancellation is Errored, never Failed;
@@ -463,8 +462,8 @@ func (r *Runner) Start(ctx context.Context, cases []Case) (*Session, error) {
 	r.emitEvent(SessionStartedEvent{eventBase: r.eventBaseFor("", SessionStarted),
 		SessionID: s.id, CaseCount: len(cases)})
 	// Execution follows the case DAG (declaration order when no case
-	// declares dependencies - byte-identical to before); the REPORT keeps
-	// declaration order via indexed writes, whatever the execution order.
+	// declares dependencies); the report keeps declaration order via
+	// indexed writes, whatever the execution order.
 	s.cases = make([]CaseReport, len(cases))
 	if r.config.MaxCaseConcurrency > 1 && len(cases) > 1 {
 		r.runCasePool(ctx, cases, s)
@@ -567,8 +566,8 @@ func (r *Runner) runCasePool(ctx context.Context, cases []Case, s *Session) {
 			}
 			ready = ready[1:]
 			inFlight++
-			// The dependency check reads done HERE, on the scheduler
-			// goroutine - workers never touch shared bookkeeping.
+			// The dependency check reads done here, on the scheduler
+			// goroutine — workers never touch shared bookkeeping.
 			r.emitEvent(CaseStartedEvent{eventBase: r.eventBaseFor(c.ID(), CaseStarted), DeclarationIndex: idx})
 			if cr, unmet := dependencySkip(c, done); unmet {
 				solo = false
@@ -620,11 +619,10 @@ func newSessionID() string {
 // happens is evidence in the CaseReport, because a batch must survive any
 // single case.
 func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
-	// Named result on purpose: the previous
-	// `cr := ...; defer func() { cr.Finished = ... }(); return cr` wrote to
-	// the local AFTER the return value was copied out — dead code, masked in
-	// the determinism tests because they normalise Finished away. A deferred
-	// write only reaches the caller through a NAMED result.
+	// Named result on purpose: a deferred write only reaches the caller
+	// through a named result. An unnamed local reassigned in a defer after
+	// "return cr" would copy the old value out before the deferred write
+	// happens, silently dropping the Finished timestamp.
 	cr = CaseReport{CaseID: c.ID(), Started: time.Now()}
 	defer func() { cr.Finished = time.Now() }()
 
@@ -651,9 +649,9 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	run := newRun(c, scope)
 	run.core.obsLimit = r.config.MaxObservationsPerCase
 	if len(r.eventObservers) > 0 {
-		// Engine follow-up: no observers means no sink - an unconfigured
-		// consumer pays nothing per retry attempt (RetryAttempt has no
-		// legacy projection, so nothing else consumes it).
+		// No observers means no sink: an unconfigured consumer pays nothing
+		// per retry attempt (RetryAttempt has no legacy projection, so
+		// nothing else consumes it).
 		run.core.retrySink = func(phase ID, retryKind string, attempt, of int, lastErr string) {
 			r.emitEvent(RetryAttemptEvent{eventBase: r.eventBaseFor(c.ID(), RetryAttempt),
 				Phase: phase, Retry: retryKind, Attempt: attempt, Of: of, LastErr: r.redactString(lastErr)})
@@ -661,17 +659,16 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	}
 	cr.Correlation = scope.Correlation // the thread joining this report to the system's own logs
 
-	// Fixtures: set up in order; tear down in reverse, ALWAYS — a cancelled
-	// or panicking run that leaks fixtures poisons the next run (and
-	// the source framework's reset-at-start-of-next-batch defect).
+	// Fixtures: set up in order; tear down in reverse, always — a cancelled
+	// or panicking run that leaks fixtures poisons the next run.
 	//
-	// Teardown is an EXPLICIT call before finish, not a defer: the review
-	// gate's probe showed that a deferred teardown runs after finish() has
-	// already derived the case's status, so a teardown failure or panic
-	// could never reach the outcome — recorded evidence that no verdict
-	// consumed. Panic-safety without the defer holds because every consumer
-	// call between here and teardown is individually contained (runOnePhase,
-	// runOneSetup, runOneTeardown).
+	// Teardown is an explicit call before finish, not a defer: a deferred
+	// teardown would run after finish() has already derived the case's
+	// status, so a teardown failure or panic could never reach the outcome
+	// — recorded evidence that no verdict consumed. Panic-safety without
+	// the defer holds because every consumer call between here and
+	// teardown is individually contained (runOnePhase, runOneSetup,
+	// runOneTeardown).
 	built := r.setupFixtures(ctx, c, run, &cr)
 
 	if cr.Status != Errored { // setup succeeded: run the phases
@@ -694,7 +691,7 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	}
 
 	r.teardownFixtures(built, run, &cr)
-	// Finish drains AND seals the ledger under one lock — the verdict and
+	// Finish drains and seals the ledger under one lock — the verdict and
 	// the closing are atomic, so no straggler can slip evidence in between.
 	// A goroutine recording after this panics loudly instead of silently
 	// dropping evidence the report will never show.
@@ -703,7 +700,7 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 }
 
 // setupFixtures runs Setup in order, stopping at the first failure. It
-// returns the fixtures whose Setup was ATTEMPTED — those are the ones whose
+// returns the fixtures whose Setup was attempted — those are the ones whose
 // Teardown must run.
 func (r *Runner) setupFixtures(ctx context.Context, c Case, run *Run, cr *CaseReport) []Fixture {
 	var built []Fixture
@@ -764,10 +761,11 @@ func runOneSetup(ctx context.Context, f Fixture, run *Run) error {
 	return contain("setup", func() error { return f.Setup(ctx, run) })
 }
 
-// runOneTeardown contains a panicking Teardown exactly as runOnePhase contains
-// a panicking phase. The asymmetry matters: a consumer bug in
-// Teardown propagated out of Start uncaught and aborted every remaining case
-// — contradicting runCase's own "a batch must survive any single case".
+// runOneTeardown contains a panicking Teardown exactly as runOnePhase
+// contains a panicking phase: without containment here, a consumer bug in
+// Teardown would propagate out of Start uncaught and abort every remaining
+// case, contradicting runCase's guarantee that a batch survives any single
+// case.
 func runOneTeardown(ctx context.Context, f Fixture, run *Run) error {
 	return contain("teardown", func() error { return f.Teardown(ctx, run) })
 }
@@ -775,7 +773,7 @@ func runOneTeardown(ctx context.Context, f Fixture, run *Run) error {
 // runPhases walks the pipeline in its fixed order, producing exactly one
 // PhaseOutcome per phase.
 func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport) {
-	// Phases whose dependency (transitively) errored are pruned WITH a
+	// Phases whose dependency (transitively) errored are pruned with a
 	// reason; independent phases still run — evidence is not abandoned
 	// wholesale because one adapter hiccuped.
 	errored := map[ID]bool{}
@@ -795,7 +793,7 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 	// outcome) advances its groups' completion barriers.
 	land := func(po PhaseOutcome) {
 		cr.Phases = append(cr.Phases, po)
-		// The EVENT copy's Reason is redacted at emission
+		// The event copy's Reason is redacted at emission
 		// (raw adapter error text is the most common secret carrier) - the
 		// same treatment Retry/Fixture/Group error strings already get. The
 		// stored row keeps the raw text; Report() redacts it at build, as
@@ -808,15 +806,15 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 		}
 	}
 
-	// step evaluates ONE phase's full pipeline - gates, group setup, When,
-	// timing, hooks, Run - and returns the single row to land plus any extra
-	// errored-map entries. It writes NOTHING shared: under level-parallelism
-	// many steps run at once, reading errored/groupRuns safely (the
-	// level barrier guarantees no concurrent writer), and the driver applies
-	// rows and marks in deterministic rank order.
+	// step evaluates one phase's full pipeline — gates, group setup, When,
+	// timing, hooks, Run — and returns the single row to land plus any
+	// extra errored-map entries. It writes nothing shared: under
+	// level-parallelism many steps run at once, reading errored/groupRuns
+	// safely (the level barrier guarantees no concurrent writer), and the
+	// driver applies rows and marks in deterministic rank order.
 	step := func(ph Interface) (po PhaseOutcome, marks []ID, started bool) {
 		id := ph.ID()
-		// A view bound to THIS phase - evidence from any branch below
+		// A view bound to this phase - evidence from any branch below
 		// is stamped by the handle, not by a mutable current-phase field.
 		pv := run.bound(id, Timing{}, nil, false)
 		pv.rank = r.rankOf[id]
@@ -832,7 +830,7 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 				DeclineSource: DeclinedByConfig}, nil, started
 		}
 
-		// The case's declaration (mark the SOURCE).
+		// The case's declaration (mark the source).
 		if selected, reason := c.Selects(id); !selected {
 			return PhaseOutcome{ID: id, Status: NotApplicable, Reason: "case declined: " + reason,
 				DeclineSource: DeclinedByCase}, nil, started
@@ -845,9 +843,9 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 				DeclineSource: DeclinedByPhase}, nil, started
 		}
 
-		// A MEMBER of a group whose setup already failed is not "premise
-		// declined" - its world could not be built (engine correction):
-		// Errored, cause named, joining the errored map transitively.
+		// A member of a group whose setup already failed is not "premise
+		// declined" — its world could not be built: Errored, cause named,
+		// joining the errored map transitively.
 		if gr := failedGroupOf(r.memberOf[id], groupRuns); gr != nil {
 			return PhaseOutcome{ID: id, Status: Errored,
 				Reason:        fmt.Sprintf("group %q setup failed: %v", gr.g.ID, gr.setupFailure()),
@@ -888,9 +886,9 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 			wv.stage = stageWhen // the condition row of the capability table
 			condOK, reason, err := runOneCondition(ctx, w, wv)
 			if wv.capViolations > 0 {
-				// The violation IS the outcome, whatever the condition
-				// returned: it broke its contract, and the refusal is already
-				// on the environment channel.
+				// The violation is the outcome, whatever the condition
+				// returned: it broke its contract, and the refusal is
+				// already on the environment channel.
 				return PhaseOutcome{ID: id, Status: Errored, Stage: StageCondition,
 					Reason: "condition: used a capability its stage does not have — a condition reads the record, it does not write it"}, nil, started
 			}
@@ -922,7 +920,7 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 			Phase: id, Reached: true, Timing: timing})
 
 		if timing.SettleDelay > 0 {
-			// The one honest exception to condition-based waiting.
+			// The one explicit exception to condition-based waiting.
 			if err := pv.sleep(ctx, timing.SettleDelay); err != nil {
 				pv.Fail(fmt.Errorf("phase %s: %w", id, err))
 				return PhaseOutcome{ID: id, Status: Errored, Reason: "cancelled"}, nil, started
@@ -939,7 +937,7 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 	// in deterministic order.
 	apply := func(po PhaseOutcome, marks []ID, started bool) {
 		if !started {
-			// Pairing is TOTAL: a gate-declined phase still gets its
+			// Pairing is total: a gate-declined phase still gets its
 			// Started, adjacent to its Finished, so span pairing never orphans.
 			r.emitEvent(PhaseStartedEvent{eventBase: r.eventBaseFor(c.ID(), PhaseStarted),
 				Phase: po.ID, Reached: false})
@@ -1069,7 +1067,7 @@ func (r *Runner) firstErroredDep(id ID, errored map[ID]bool) (ID, bool) {
 	return hit, found
 }
 
-// finish derives the case's status — the SINGLE writer — and copies the
+// finish derives the case's status — the single writer — and copies the
 // run's evidence into the report.
 //
 // Derivation order, most informative fact first:
@@ -1078,7 +1076,7 @@ func (r *Runner) firstErroredDep(id ID, errored map[ID]bool) (ID, bool) {
 //
 // A failed comparison is a completed judgement about the product and outranks
 // environment noise. An error with no failed comparison is Errored. Passing
-// results with no failures is Passed. And ZERO results is NotApplicable,
+// results with no failures is Passed. And zero results is NotApplicable,
 // never Passed — the case-level form of the founding rule: a case that
 // asserted nothing must not report success.
 func (r *Runner) finish(run *Run, cr *CaseReport) {
@@ -1136,10 +1134,10 @@ func view(ar attributedResult) ResultView {
 	}
 }
 
-// jsonSafe replaces a value encoding/json cannot marshal (NaN/Inf floats) with
-// a descriptive string. C3: one non-finite float in one case's evidence used
-// to make WriteJSON fail and lose EVERY case's evidence with it - the report
-// is the product, and it must degrade a value, never vanish.
+// jsonSafe replaces a value encoding/json cannot marshal (NaN/Inf floats)
+// with a descriptive string: an unmarshallable float anywhere in one case's
+// evidence must not fail WriteJSON and lose every case's evidence with it —
+// the report is the product, and it must degrade a value, never vanish.
 func jsonSafe(v any) any {
 	switch f := v.(type) {
 	case float64:

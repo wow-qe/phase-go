@@ -5,7 +5,7 @@ package phase
 
 import "fmt"
 
-// Preflight refuses mis-declared CASES, executing nothing. Structural and
+// Preflight refuses mis-declared cases, executing nothing. Structural and
 // configuration problems were already refused at NewRunner; what remains is
 // everything a case can get wrong: a skip with no reason, exclusivity with no
 // justification, a nil fixture, and scopes that collide.
@@ -37,7 +37,7 @@ func (r *Runner) Preflight(cases []Case) error {
 			return &LoadError{Code: ExclusiveWithoutReason, Subject: c.ID(),
 				Detail: "exclusivity is expensive, and unexplained expense gets copied"}
 		}
-		// Snapshot Fixtures() ONCE - a non-idempotent Case could
+		// Snapshot Fixtures() once - a non-idempotent Case could
 		// otherwise return a valid slice to Preflight and a nil-containing one
 		// to setupFixtures. The snapshot is what actually runs (see runCase).
 		fixtures := c.Fixtures()
@@ -66,7 +66,7 @@ func (r *Runner) Preflight(cases []Case) error {
 			seenCorrelation[scope.Correlation] = c.ID()
 		}
 	}
-	// The case DAG is validated AFTER the per-case guards - a nil case
+	// The case DAG is validated after the per-case guards - a nil case
 	// or duplicate ID must get its own typed refusal, never a panic
 	// or a framework-error from the dag layer.
 	return validateCaseDeps(cases)

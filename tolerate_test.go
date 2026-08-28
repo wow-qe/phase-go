@@ -12,11 +12,9 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Flaked was a vocabulary word with no producer — declared, counted and
-// Verify-guarded, assigned nowhere. Tolerate is the producer, built to
-// The four clauses: a stated reason, a bounded retry, every attempt
-// recorded as evidence, and "passed on attempt 3" never laundered into
-// "passed".
+// Tolerate is the producer of Flaked outcomes. Four clauses govern it:
+// a stated reason, a bounded retry, every attempt recorded as evidence,
+// and "passed on attempt 3" never laundered into "passed".
 
 func fastTolerantTiming() Timing {
 	return Timing{Attempts: 3, Interval: time.Millisecond, Timeout: time.Minute}
@@ -67,8 +65,8 @@ func TestToleratePassOnRetryIsFlakedWithTheTrail(t *testing.T) {
 	if !strings.Contains(cr.Reason, "attempt 3") {
 		t.Fatalf("reason = %q, want it to say which attempt passed", cr.Reason)
 	}
-	// The final judgement is a PASSING result (Verify's Flaked rule: evidence
-	// of passing, no failing comparisons)...
+	// The final judgement is a passing result (Verify's Flaked rule:
+	// evidence of passing, no failing comparisons)...
 	if len(cr.Results) != 1 || !cr.Results[0].Result.Passed {
 		t.Fatalf("results = %+v, want exactly the final passing result", cr.Results)
 	}
@@ -107,7 +105,7 @@ func TestTolerateExhaustedRecordsTheFinalFailure(t *testing.T) {
 }
 
 func TestTolerateWithoutAReasonRefusesToRun(t *testing.T) {
-	// Tolerant comes WITH a stated reason. A tolerance nobody justified
+	// Tolerant comes with a stated reason. A tolerance nobody justified
 	// is a silent flake-swallower; refuse it as a failing result, loudly.
 	calls := 0
 	r := mustRunner(t, Config{Defaults: fastTolerantTiming()},
@@ -162,12 +160,11 @@ func TestARealFailureOutranksAFlake(t *testing.T) {
 }
 
 func TestCancellationMidToleranceIsErroredNotFailed(t *testing.T) {
-	// Cancellation during the retry
-	// loop recorded a fabricated final failing result, so an operator kill
-	// (CI timeout, deploy interrupt) read as a product defect — inverting
-	// "cancellation is Errored, never Failed". An interrupted tolerance is
-	// not a concluded one: no attempt's failure carries verdict weight until
-	// the budget finishes adjudicating.
+	// Cancellation during the retry loop must not read as a product
+	// defect: an operator kill (CI timeout, deploy interrupt) is Errored,
+	// never Failed. An interrupted tolerance is not a concluded one — no
+	// attempt's failure carries verdict weight until the budget finishes
+	// adjudicating.
 	ctx, cancel := context.WithCancel(context.Background())
 	calls := 0
 	r := mustRunner(t, Config{Defaults: fastTolerantTiming()},
@@ -192,7 +189,7 @@ func TestCancellationMidToleranceIsErroredNotFailed(t *testing.T) {
 		t.Fatalf("calls = %d, want 1 — cancellation stops the loop", calls)
 	}
 	// The evidence is not dropped: the interrupted attempt and the
-	// interruption itself are on the record, with the ACTUAL attempt count.
+	// interruption itself are on the record, with the actual attempt count.
 	var names []string
 	for _, ob := range cr.Observations {
 		names = append(names, ob.Name)

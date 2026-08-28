@@ -14,9 +14,9 @@ import (
 	"github.com/wow-qe/phase-go/phasetest"
 )
 
-// Wrong DATA flowing through the correct pipeline: every knob on the
-// sabotaged system must be answered by a loud, attributed, structurally
-// pinned response — never a green report, never a vanished row.
+// Wrong data flowing through the correct pipeline: every knob on the
+// fault-injected system must produce a loud, attributed, structurally
+// specific response — never a green report, never a vanished row.
 
 func TestCorruptAuthCodeFailsWithBothValues(t *testing.T) {
 	sys, cases := misuseSuite(t)
@@ -56,8 +56,8 @@ func TestNeverSettlingSystemNamesItsBudget(t *testing.T) {
 	rep := run(t, mustMisuseRunner(t, sys, sane()), onlyCase(t, cases, "happy-single"))
 
 	cr := rowOf(t, rep, "happy-single")
-	// Budget exhaustion is an ERROR outcome (the wait concluded nothing),
-	// and the budget is NAMED — never "nothing found".
+	// Budget exhaustion is an error outcome (the wait concluded nothing),
+	// and the budget is named — never "nothing found".
 	if cr.Status != phase.Errored {
 		t.Fatalf("case = %v, want Errored — an exhausted wait concluded nothing", cr.Status)
 	}
@@ -77,7 +77,7 @@ func TestNeverSettlingSystemNamesItsBudget(t *testing.T) {
 }
 
 func TestBudgetErrorCarriesTheSentinel(t *testing.T) {
-	// The typed pin: at the call site the exhaustion must be
+	// The typed check: at the call site the exhaustion must be
 	// errors.Is-able, not a string.
 	sys, cases := misuseSuite(t)
 	sys.SeedCatalog()
@@ -110,7 +110,7 @@ func TestLostLedgerRowIsNamed(t *testing.T) {
 	var named bool
 	for _, ar := range cr.Results {
 		if ar.Result.Name == "every settled entity is ledgered" && !ar.Result.Passed {
-			// The missing member is named — a reader learns WHICH row vanished.
+			// The missing member is named — a reader learns which row vanished.
 			if strings.Contains(ar.Result.Reason, "/e3") {
 				named = true
 			}
@@ -131,7 +131,7 @@ func TestUnsettledEntityFailsItsOwnRow(t *testing.T) {
 		t.Fatalf("case = %v in %q, want Failed in settle_checks", cr.Status, cr.FailedIn)
 	}
 	// EachEntity: every entity keeps its own attributed row — 3 submitted,
-	// 3 rows, each failing with ITS EntityRef, none silently dropped.
+	// 3 rows, each failing with its own EntityRef, none silently dropped.
 	var rows, failing int
 	for _, ar := range cr.Results {
 		if ar.Result.Name == "terminal state" {
@@ -148,9 +148,9 @@ func TestUnsettledEntityFailsItsOwnRow(t *testing.T) {
 		t.Fatalf("per-entity rows = %d (failing %d), want 3/3 — nothing may be silently short", rows, failing)
 	}
 	// The failure triggers the When-gated refund audit, which finds no
-	// refund and records its own failing comparison. The ROW status stays
+	// refund and records its own failing comparison. The row status stays
 	// the arc's ("passed" — the phase ran to completion); the failing count
-	// is the sibling count that closes the reading gap, and the CASE
+	// is the sibling count that closes the reading gap, and the case
 	// verdict rides the evidence.
 	if po := outcomeOf(t, cr, "refund_audit"); po.DeclineSource != "" || po.Failing != 1 {
 		t.Fatalf("refund_audit = %+v, want it to have run and recorded its failing comparison", po)
@@ -191,10 +191,10 @@ func TestFlakeThatNeverHealsIsAFailureNotAFlake(t *testing.T) {
 func TestPanickingSystemIsContainedToItsCase(t *testing.T) {
 	sys, cases := misuseSuite(t)
 	sys.panicInSubmit = true
-	// TWO cases in one session: the panicking one and a bystander. The
+	// Two cases in one session: the panicking one and a bystander. The
 	// panic is the first case's evidence, never the batch's crash — but
-	// with the shared system panicking, BOTH cases hit it; the point is the
-	// session finishes and reports, it does not crash.
+	// with the shared system panicking, both cases hit it; the point is
+	// that the session finishes and reports, rather than crashing.
 	rep := run(t, mustMisuseRunner(t, sys, sane()),
 		append(onlyCase(t, cases, "happy-single"), onlyCase(t, cases, "declined-payment")...))
 
@@ -240,8 +240,8 @@ func TestUnhealthyProcessorIsEnvironmentNotProduct(t *testing.T) {
 	rep := run(t, mustMisuseRunner(t, sys, sane()), onlyCase(t, cases, "happy-single"))
 
 	cr := rowOf(t, rep, "happy-single")
-	// The two-fact split's environment half: Errored, stage before, and NO
-	// recorded product violation — nobody gets paged for the product.
+	// The two-fact split's environment half: Errored, stage before, and no
+	// recorded product violation — no on-call alert fires for the product.
 	if cr.Status != phase.Errored || cr.FailedIn != "" {
 		t.Fatalf("case = %v (FailedIn %q), want Errored with no product failure", cr.Status, cr.FailedIn)
 	}

@@ -10,15 +10,15 @@ import (
 
 // Optional per-phase hooks, discovered by type
 // assertion — the required Interface contract does not grow. Both hooks
-// receive the phase's OWN bound *Run: same attribution, same resolved
+// receive the phase's own bound *Run: same attribution, same resolved
 // Timing, and everything they Record/Observe/Fail rides the existing
 // evidence machinery — there is no separate hook status channel, by
 // design: a hook that records a failing result can never be silently
-// swallowed into a green case, whatever its own error return says.
+// swallowed into a passing case, whatever its own error return says.
 
 // BeforeHook probes preconditions. It runs after SettleDelay (probing an
 // unsettled system fails spuriously) and before Run. Unlike AppliesTo it
-// MAY read live system state — that is its purpose — but it must be
+// may read live system state — that is its purpose — but it must be
 // side-effect-free on the system under test: acquire-then-verify belongs
 // in a Group's Lifecycle, which has the teardown guarantee Before lacks.
 //
@@ -26,8 +26,8 @@ import (
 // is not called, the outcome is Errored ("before: " + reason, Stage
 // "before"), and dependents prune exactly as for any phase error.
 //
-// The two-fact pattern for a precondition VIOLATION (a product fact, not
-// environment noise): Record the failing result WITH evidence, then return
+// The two-fact pattern for a precondition violation (a product fact, not
+// environment noise): record the failing result with evidence, then return
 // the error — the case derives Failed through the existing single-writer
 // path. An environment failure just returns the error: Errored.
 //
@@ -40,12 +40,12 @@ type BeforeHook interface {
 
 // AfterHook concludes: tally, phase-specific conclusions, per-phase
 // cleanup that does not need to survive cancellation (cleanup that must
-// belongs to Group/Fixture teardown — After sees the live ctx).
+// survive belongs to Group/Fixture teardown — After sees the live ctx).
 //
-// After runs on EVERY path where Before succeeded — pass, fail, error,
+// After runs on every path where Before succeeded — pass, fail, error,
 // panic in Run — and receives the candidate outcome (its Results/Failing
 // counts are computed later and read as zero here). Its error folds into
-// the SAME outcome row before it lands: an Errored row stays Errored
+// the same outcome row before it lands: an Errored row stays Errored
 // (After never heals a failed Run); a Passed row flips to Errored
 // ("after: " + reason, Stage "after"). Exactly one outcome lands per
 // phase, after After has had its say.
@@ -74,9 +74,9 @@ func executePhase(ctx context.Context, ph Interface, pv *Run) PhaseOutcome {
 	if bh, ok := ph.(BeforeHook); ok {
 		preFailing := pv.failingRecorded()
 		if err := runOneBefore(ctx, bh, pv); err != nil {
-			// The two-fact split, kept clean at the ERRORS layer too (QE
-			// catch): a precondition VIOLATION recorded its failing result -
-			// a product fact - and must not ALSO page whoever watches
+			// The two-fact split, kept clean at the errors layer too: a
+			// precondition violation recorded its failing result - a
+			// product fact - and must not also page whoever watches
 			// cr.Errors for environment trouble. Only an unrecorded failure
 			// is environment noise.
 			if pv.failingRecorded() == preFailing {

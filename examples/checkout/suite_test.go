@@ -17,11 +17,10 @@ import (
 	config "github.com/wow-qe/phase-go/x/config"
 )
 
-// This file is the PROOF for the feature map in README.md: every capability
-// the library ships, exercised end-to-end against the checkout flow — a dry
-// run (Explain), a green run under observers, an honest red run, both
-// mutation gates, sharding, and a hook-bearing phase unit-tested in
-// isolation. If a feature stops working, a test here goes red.
+// This file exercises the feature map in README.md end-to-end against the
+// checkout flow: a dry run (Explain), a green run under observers, an
+// honest red run, both mutation gates, sharding, and a hook-bearing phase
+// unit-tested in isolation.
 
 func fastConfig() phase.Config {
 	return phase.Config{Defaults: phase.Timing{Attempts: 5, Interval: time.Millisecond}}
@@ -241,7 +240,7 @@ func TestSmokeSuiteGreenUnderObservers(t *testing.T) {
 		t.Fatalf("case-observer projection saw %d report(s), want happy-single once", len(observed))
 	}
 
-	// Redaction holds on BOTH surfaces: the artifact and the live stream.
+	// Redaction holds on both surfaces: the artifact and the live stream.
 	var buf bytes.Buffer
 	if err := rep.WriteJSON(&buf); err != nil {
 		t.Fatalf("WriteJSON: %v", err)
@@ -306,7 +305,7 @@ func TestFullRegressionSequential(t *testing.T) {
 		}
 	}
 
-	// The case dependency was satisfied — happy-multi FLAKED, and the
+	// The case dependency was satisfied — happy-multi flaked, and the
 	// requirement declared Acceptable: [Passed, Flaked] — so the dependent
 	// ran and passed.
 	if got := caseRow(t, rep, "billing-report").Status; got != phase.Passed {
@@ -426,8 +425,8 @@ cases:
 // --- the mutation gates: is the suite's green actually evidence? ------------
 
 // gutted rebuilds the pipeline with the ledger assertions removed. The suite
-// STAYS green — that is the gate's lesson: nothing else covers what ledger
-// asserts, and the visible zero on its outcome row is how you notice.
+// stays green: nothing else covers what ledger asserts, and the visible
+// zero on its outcome row is how that gap becomes noticeable.
 func TestMutationGateGutted(t *testing.T) {
 	sys, cases := newSuite(t)
 	p := phase.NewPipeline(
@@ -460,9 +459,9 @@ func TestMutationGateGutted(t *testing.T) {
 	}
 }
 
-// alwaysPass proves WHOSE judgement a red verdict rides on: force authorize's
-// results to pass and the declined-payment case flips green — authorize was
-// the phase doing the work.
+// TestMutationGateAlwaysPass checks which phase's judgement a red verdict
+// rides on: forcing authorize's results to pass flips declined-payment
+// green, showing authorize was the phase doing the work.
 func TestMutationGateAlwaysPass(t *testing.T) {
 	sys, cases := newSuite(t)
 	baseline := report(t, newRunner(t, sys, fastConfig()), pick(t, cases, "declined-payment"))
@@ -528,7 +527,7 @@ func TestShardedRunsMergeIntoOneReport(t *testing.T) {
 	}
 }
 
-// --- the operator kill-switch: deliberate, LOUD coverage loss ---------------
+// --- the operator kill-switch: deliberate, loud coverage loss ---------------
 
 func TestOperatorKillSwitchIsLoudCoverageLoss(t *testing.T) {
 	sys, cases := newSuite(t)
@@ -594,7 +593,7 @@ func TestSubmitPhaseInIsolation(t *testing.T) {
 
 	// Unseeded: the Before hook refuses — the row is Errored in the before
 	// stage (Run never invoked). The recorded violation is the two-fact
-	// pattern's product half: in a full run the CASE derives Failed from it.
+	// pattern's product half: in a full run the case derives Failed from it.
 	run, _ := phasetest.RunFor(t, c, "submit", timing)
 	po := phasetest.InvokePhase(context.Background(), &submitPhase{sys}, run)
 	if po.Status != phase.Errored || po.Stage != phase.StageBefore {

@@ -5,11 +5,10 @@ package phase
 
 import "time"
 
-// Timing bounds a phase's waiting. Budgets are in ATTEMPTS, per case — the
-// source framework's shared wall-clock ceiling starved nine cases that were
-// merely scheduled late, and its own fix comment records the rule: wall-clock
-// stays only as a backstop that can never be the binding constraint in a
-// healthy run.
+// Timing bounds a phase's waiting. Budgets are in attempts, per case: a
+// shared wall-clock ceiling across cases penalizes a case merely scheduled
+// late, so wall-clock is only a backstop and must never be the binding
+// constraint in a healthy run.
 type Timing struct {
 	// Attempts is how many times a WaitUntil condition may be evaluated.
 	Attempts int
@@ -18,10 +17,10 @@ type Timing struct {
 	// Timeout is the wall-clock backstop for the whole phase, including
 	// teardown's ceiling on cancellation.
 	Timeout time.Duration
-	// SettleDelay is the one honest exception to "wait for a condition, not
-	// a duration": a downstream system that is eventually-consistent with NO
-	// observable readiness signal. It is named as a delay so it stays
-	// visible as debt.
+	// SettleDelay is the one explicit exception to "wait for a condition,
+	// not a duration": a downstream system that is eventually-consistent
+	// with no observable readiness signal. It is named as a delay so it
+	// stays visible as debt.
 	SettleDelay time.Duration
 }
 
@@ -34,9 +33,9 @@ type Settings struct {
 	// DependsOn orders this phase after others. Cycles and unknown IDs are
 	// LoadErrors at preflight.
 	DependsOn []ID
-	// Sub declares sub-phases: same position in the sequence, different
-	// meanings — the cure for "PHASE 3.5". Exactly one level deep; deeper
-	// nesting is a LoadError.
+	// Sub is retained only for decoding compatibility: any non-empty value
+	// is rejected at construction (settings_sub_removed). Scoped lifecycle
+	// belongs to Pipeline.Group.
 	Sub map[ID]Settings
 	// Timing overrides the inherited defaults where set (zero fields
 	// inherit).
@@ -47,7 +46,7 @@ type Settings struct {
 }
 
 // Config is the resolved configuration the Runner is constructed with. The
-// core validates the STRUCT; parsing files into it lives in x/config (or the
+// core validates the struct; parsing files into it lives in x/config (or the
 // consumer's loader), so the core keeps its no-dependency rule. Unknown keys
 // are the loader's problem and must be a load-time error there.
 type Config struct {
@@ -66,7 +65,7 @@ type Config struct {
 	// Report.Redact / RedactMatching cover the names only known at paste
 	// time. Case-insensitive.
 	RedactKeys []string
-	// RedactPatterns are regular expressions scrubbed from every STRING
+	// RedactPatterns are regular expressions scrubbed from every string
 	// carrier in every Report() (error strings, case and phase-outcome
 	// reasons, result reasons, string observation values, observation
 	// names). Key-based RedactKeys cannot reach free text; a DSN in a
@@ -74,26 +73,25 @@ type Config struct {
 	// NewRunner - a redaction that never compiled is a redaction that never
 	// ran, silently.
 	RedactPatterns []string
-	// MaxPhaseConcurrency lets SAME-DAG-LEVEL phases of one case overlap.
-	// 0 or 1 means sequential - today's exact behaviour, the default. Before
-	// raising it: two same-level phases sharing one adapter instance become
-	// concurrent callers of it; audit for goroutine-safety first.
+	// MaxPhaseConcurrency lets same-DAG-level phases of one case overlap.
+	// 0 or 1 means sequential (the default). Before raising it: two
+	// same-level phases sharing one adapter instance become concurrent
+	// callers of it; audit for goroutine-safety first.
 	MaxPhaseConcurrency int
 	// MaxCaseConcurrency lets cases overlap, honouring Exclusive() (an
 	// exclusive case drains the pool and runs alone) and case dependencies.
-	// 0 or 1 means sequential - today's exact behaviour, the default.
-	// Before raising it: every Fixture and adapter must partition by Scope,
-	// or a shared client that worked sequentially becomes a race that reads
-	// as a flaky product defect - the failure this library exists to kill,
-	// reintroduced through a side door. Mark anything uncertain Exclusive()
-	// until proven safe. Note also: WithCaseObserver and WithProgress fire
-	// in COMPLETION order under concurrency (that is their value); only
-	// Session.Cases()/Report keep declaration order. Aggregate poll rates
-	// multiply - flake rates can RISE from backend contention.
+	// 0 or 1 means sequential (the default). Before raising it: every
+	// Fixture and adapter must partition by Scope, or a shared client that
+	// worked sequentially becomes a race that reads as a flaky product
+	// defect. Mark anything uncertain Exclusive() until proven safe. Note
+	// also: WithCaseObserver and WithProgress fire in completion order
+	// under concurrency (that is their value); only Session.Cases()/Report
+	// keep declaration order. Aggregate poll rates multiply — flake rates
+	// can rise from backend contention.
 	MaxCaseConcurrency int
 	// MaxObservationsPerCase bounds evidence retention (unbounded
 	// retention is an OOM wall in CI containers). Zero means unlimited.
-	// Truncation is LOUD: the report carries a marker observation naming
+	// Truncation is loud: the report carries a marker observation naming
 	// exactly how many observations were dropped — a silent cap is a
 	// default, and defaults are how evidence disappears.
 	MaxObservationsPerCase int

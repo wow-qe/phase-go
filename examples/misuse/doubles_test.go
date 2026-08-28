@@ -12,7 +12,7 @@ import (
 )
 
 // The misdeclaration doubles: minimal Phase and Case implementations whose
-// wiring the tests deliberately get wrong. The REAL flow stays in
+// wiring the tests deliberately get wrong. The real flow stays in
 // phases.go/case.go, correct — every defect here is seeded per-test.
 
 type sabotagePhase struct {
@@ -67,8 +67,8 @@ func (c *sabotageCase) Scenario() string          { return "happy" }
 func (c *sabotageCase) Entities() int             { return 1 }
 
 // wantLoad asserts err is a *phase.LoadError carrying exactly the given
-// code — refusals are pinned by their machine-readable vocabulary, never
-// by message prose.
+// code — refusals are identified by their machine-readable vocabulary,
+// never by message prose.
 func wantLoad(t *testing.T, err error, code phase.LoadCode) *phase.LoadError {
 	t.Helper()
 	if err == nil {

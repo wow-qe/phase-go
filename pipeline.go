@@ -18,7 +18,7 @@ type Interface interface {
 	ID() ID
 
 	// DependsOn lists the phases that must complete first. These are the
-	// CODE-declared prerequisites; configuration may add ordering on top but
+	// code-declared prerequisites; configuration may add ordering on top but
 	// can never remove one of these (see resolve()).
 	DependsOn() []ID
 
@@ -33,7 +33,7 @@ type Interface interface {
 	Requires() []KeyID
 
 	// AppliesTo declares whether this phase runs for the given case. It may
-	// read the case declaration and configuration; it may NOT read live
+	// read the case declaration and configuration; it may not read live
 	// system state. Declining requires a reason.
 	AppliesTo(Case, Config) Applicability
 

@@ -34,8 +34,9 @@ func TestRunForWiresCaseAndScope(t *testing.T) {
 
 func TestRunForPositionsThePhaseAndTiming(t *testing.T) {
 	// WaitUntil reads its budget from the phase Run's currentTiming(), which
-	// only WithPhase(id, timing) installs. Driving a real WaitUntil is the
-	// externally-observable proof that RunFor positioned it correctly.
+	// only WithPhase(id, timing) installs. RunFor must configure the run with
+	// exactly that phase and timing, verified here by driving a real
+	// WaitUntil against it.
 	c := &stubCase{id: "case-1"}
 	timing := phase.Timing{Attempts: 3, Interval: time.Millisecond}
 	run, _ := phasetest.RunFor(t, c, "wait-phase", timing)
@@ -56,7 +57,7 @@ func TestRunForPositionsThePhaseAndTiming(t *testing.T) {
 func TestRunForClockCanBeAdvancedByTheTest(t *testing.T) {
 	// The returned Clock is the one wired as the sleeper: advancing time
 	// happens via the sleeper, never by blocking, and a 20×15s budget must
-	// still resolve instantly through it (the required end-to-end proof).
+	// still resolve instantly through it.
 	c := &stubCase{id: "case-1"}
 	timing := phase.Timing{Attempts: 20, Interval: 15 * time.Second}
 	run, clock := phasetest.RunFor(t, c, "settle", timing)

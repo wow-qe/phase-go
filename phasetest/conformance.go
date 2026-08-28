@@ -35,7 +35,7 @@ const unknownProbeID phase.ID = "phasetest/__unknown_probe_the_case_has_never_he
 //   - Timing(id) returns ok=true with an all-zero Timing
 //
 // Every violation is reported (via t.Error), not just the first, so a
-// broken Case shows its whole rap sheet in one run.
+// broken Case shows every failing check in one run.
 func ConformanceCase(t testing.TB, c phase.Case) {
 	t.Helper()
 	if c == nil {

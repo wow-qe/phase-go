@@ -3,9 +3,10 @@
 
 package phase
 
-// The stringly
-// conventions become typed vocabulary. Wire representations are unchanged
-// — these close the sets, they do not rename the values.
+// This file closes several stringly-typed conventions into typed,
+// exhaustively-checked vocabularies: Stage, DeclineSource and SourceKind
+// are each a fixed set of values, validated at Verify. Wire representations
+// are unchanged — these close the sets, they do not rename the values.
 
 // Stage names which hook stage produced a non-ordinary phase outcome.
 // Closed set; Verify refuses anything else. Empty means an ordinary Run
@@ -26,7 +27,7 @@ func validStage(s Stage) bool {
 	return false
 }
 
-// DeclineSource says structurally WHY a phase never ran — the axis Stage
+// DeclineSource says structurally why a phase never ran — the axis Stage
 // does not carry (Stage: which stage of an attempted phase spoke;
 // DeclineSource: why there was no attempt). The prose Reason stays for
 // humans; aggregation filters on this, never on prefixes.

@@ -48,7 +48,7 @@ func TestExplainProjectsTheRunWithoutExecuting(t *testing.T) {
 	if d := byID["disabled"]; d.Disposition != PlanDeclined || d.DeclineSource != DeclinedByConfig {
 		t.Fatalf("disabled = %+v", d)
 	}
-	// The honesty three-way: a When-gated phase is CONDITIONAL, never a
+	// The honesty three-way: a When-gated phase is conditional, never a
 	// false claim of will-run — even though this one's condition would pass.
 	if g := byID["gated"]; g.Disposition != PlanConditional {
 		t.Fatalf("gated = %+v — Explain must not claim precision it cannot have", g)

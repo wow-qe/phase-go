@@ -11,8 +11,8 @@ import (
 	phase "github.com/wow-qe/phase-go"
 )
 
-// Merge sabotage: a merged report must be exactly as trustworthy as its
-// shards, so every way the combination could lie is a refusal.
+// A merged report must be exactly as trustworthy as its shards, so every
+// way the combination could misrepresent them is a refusal.
 
 func TestMergeOfNothingRefuses(t *testing.T) {
 	if rep, err := phase.MergeReports(); err == nil || rep != nil {
@@ -36,7 +36,7 @@ func TestMergeRefusesATamperedShard(t *testing.T) {
 	if err == nil || rep != nil {
 		t.Fatal("a corrupted shard must not blend into a merged report")
 	}
-	// The refusal reuses Verify itself: the SAME invariant a standalone
+	// The refusal reuses Verify itself: the same invariant a standalone
 	// Verify would name must be in the chain — merge must not reimplement
 	// (and silently weaken) the report's own integrity rules.
 	var fe *phase.FrameworkError

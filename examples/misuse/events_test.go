@@ -15,9 +15,9 @@ import (
 	"github.com/wow-qe/phase-go/phasetest"
 )
 
-// The event stream under chaos: a session full of failures, declines,
-// skips and a permanent flake, run concurrently — and every delivery
-// guarantee must hold exactly as it does on a green day.
+// The event stream under concurrent load: a session mixing failures,
+// declines, skips, and a permanent flake, run with both concurrency knobs
+// on — every delivery guarantee must hold the same as on a passing run.
 
 func TestEventStreamGuaranteesHoldUnderChaos(t *testing.T) {
 	sys, cases := misuseSuite(t)
@@ -59,7 +59,7 @@ func TestEventStreamGuaranteesHoldUnderChaos(t *testing.T) {
 	if events[0].Kind() != phase.SessionStarted || events[len(events)-1].Kind() != phase.SessionFinished {
 		t.Fatal("the stream must stay bracketed by session events under chaos")
 	}
-	// 3. Pairing is TOTAL per case and phase: every Started has exactly one
+	// 3. Pairing is total per case and phase: every Started has exactly one
 	// Finished, gate-declined and failing phases included.
 	type key struct {
 		caseID string
@@ -100,9 +100,9 @@ func TestEventStreamGuaranteesHoldUnderChaos(t *testing.T) {
 	if tolerance == 0 {
 		t.Fatal("the permanently-flapping tolerance must heartbeat on the stream")
 	}
-	// 5. Emission redaction holds while everything is on fire: the corrupt
-	// comparison carries the real auth code in Expected — it must never
-	// reach an event unredacted.
+	// 5. Emission redaction holds under mixed pass/fail traffic: the
+	// corrupt comparison carries the real auth code in Expected — it must
+	// never reach an event unredacted.
 	for _, ev := range events {
 		if cf, ok := ev.(phase.CaseFinishedEvent); ok {
 			var buf bytes.Buffer

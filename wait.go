@@ -19,7 +19,7 @@ import (
 // case, never a shared wall clock (a shared ceiling starves cases
 // that were merely scheduled late). The semantics, one per outcome:
 //
-//   - done            → the value, nil. Sleeps happen BETWEEN attempts only.
+//   - done            → the value, nil. Sleeps happen between attempts only.
 //   - budget spent    → ErrBudgetExhausted, wrapped to read
 //     "gave up after 4×15s in settle" — a failure that names its budget,
 //     never a timeout swallowed as "nothing found".
@@ -30,10 +30,10 @@ import (
 //   - ctx cancelled   → ctx.Err(), so the runner marks the case
 //     Errored("cancelled"), never Failed.
 //
-// Timing.Timeout, when set, bounds the whole wait AND each cond call: cond
+// Timing.Timeout, when set, bounds the whole wait and each cond call: cond
 // receives a context carrying the remaining budget, and its expiry surfaces
 // as the named budget error. The cut-off is cooperative — Go cannot preempt
-// a goroutine — so cond MUST pass its context through to whatever blocks
+// a goroutine — so cond must pass its context through to whatever blocks
 // (the same contract every HTTP/DB/gRPC call already keeps); a cond that
 // ignores its context is beyond any framework's reach.
 //
@@ -50,16 +50,16 @@ func WaitUntil[T any](ctx context.Context, r *Run, cond func(context.Context) (T
 				phaseID, timing.Attempts),
 		}
 	}
-	// Timeout is the wall-clock backstop the docs always promised and the
-	// code never read. Two enforcement points, because two different things go
-	// slow: the deadline on the injected clock bounds the ATTEMPT LOOP (many
-	// slow-but-returning calls), and a deadline context handed to cond bounds
-	// EACH CALL, so a single cond that blocks past the budget is cut off
-	// mid-call rather than caught before an attempt that never comes. The
-	// cut-off is cooperative — Go cannot preempt a goroutine, so a cond that
-	// ignores its context is beyond any framework's reach; that is a contract
-	// on cond, stated on this function. Zero Timeout means unbounded (attempts
-	// still cap the loop).
+	// Timeout is the wall-clock backstop, enforced at two points because
+	// two different things go slow: the deadline on the injected clock
+	// bounds the attempt loop (many slow-but-returning calls), and a
+	// deadline context handed to cond bounds each call, so a single cond
+	// that blocks past the budget is cut off mid-call rather than caught
+	// only before an attempt that never comes. The cut-off is cooperative —
+	// Go cannot preempt a goroutine, so a cond that ignores its context is
+	// beyond any framework's reach; that is a contract on cond, stated on
+	// this function. Zero Timeout means unbounded (attempts still cap the
+	// loop).
 	var deadline time.Time
 	if timing.Timeout > 0 {
 		deadline = r.now().Add(timing.Timeout)

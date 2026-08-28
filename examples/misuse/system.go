@@ -1,15 +1,13 @@
 // Copyright 2026 The Phase Contributors
 // SPDX-License-Identifier: MIT
 
-// Package misuse is the SABOTAGE TWIN of examples/checkout: the same
-// checkout flow, deliberately fed wrong data and wrong declarations, one
-// defect at a time — and every defect must be answered by the framework's
-// documented response (a LoadError refusal, a loud failing result, an
-// Errored-never-Failed, a contained panic, a Verify catch, a named budget
-// error). Its README indexes each seeded defect and the response the
-// framework owes it. This package is the misuse canary: if a defect here
-// stops being answered loudly, a silent-failure bug has entered the
-// framework.
+// Package misuse is an adversarial misuse example built from the same
+// checkout flow as examples/checkout, deliberately fed wrong data and
+// wrong declarations, one defect at a time. Each defect is answered by a
+// specific documented response (a LoadError refusal, a loud failing
+// result, an Errored-never-Failed result, a contained panic, a Verify
+// catch, a named budget error). Its README indexes each seeded defect
+// against the response it produces.
 package misuse
 
 import (
@@ -27,12 +25,12 @@ import (
 type checkoutSystem struct {
 	mu sync.Mutex
 
-	// catalogSeeds is a LEASE COUNT, not a boolean: under MaxCaseConcurrency
-	// several cases hold the catalog at once, and a boolean fixture is the
-	// classic non-scope-partitioned trap — one case's teardown clobbers a
-	// concurrent case's precondition (a rare race:
-	// billing-report failing submit's Before under concurrency). Each
-	// case's fixture takes and releases its own lease instead.
+	// catalogSeeds is a lease count, not a boolean: under
+	// MaxCaseConcurrency several cases hold the catalog at once, and a
+	// boolean fixture flag is not safe under concurrent cases — one
+	// case's teardown can clear a precondition a concurrent case still
+	// needs. Each case's fixture takes and releases its own lease
+	// instead.
 	catalogSeeds int
 	healthy      bool
 
@@ -42,18 +40,18 @@ type checkoutSystem struct {
 
 	// settlePollsNeeded: how many settlement polls before entities settle.
 	settlePollsNeeded int
-	// flapLedgerCount: when true, the FIRST ledger-count read returns one
+	// flapLedgerCount: when true, the first ledger-count read returns one
 	// row short (the tolerated flake), correct afterwards.
 	flapLedgerCount bool
 	flapConsumed    bool
 
-	// --- sabotage knobs: each seeds ONE kind of wrong data ---------------
+	// --- fault knobs: each seeds one kind of wrong data ------------------
 
 	// corruptAuthCode: Authorize returns a malformed code (ValueMatch must
 	// fail with a diff naming both values).
 	corruptAuthCode bool
 	// neverSettle: PollSettlement never completes (WaitUntil must exhaust
-	// its budget with the budget NAMED, never "nothing found").
+	// its budget and name the budget, never "nothing found").
 	neverSettle bool
 	// dropLedgerRow: LedgerRows omits the last row (ContainsAll must fail
 	// naming the missing entity).
@@ -62,8 +60,8 @@ type checkoutSystem struct {
 	// the per-entity row, attributed to that entity).
 	wrongEntityState bool
 	// permanentLedgerFlap: LedgerCount stays one short forever (Tolerate
-	// must EXHAUST, recording the trail and naming the tolerance — a flake
-	// that never heals is a failure, not a flake).
+	// must exhaust its budget, recording the trail and naming the
+	// tolerance — a flake that never heals is a failure, not a flake).
 	permanentLedgerFlap bool
 	// panicInSubmit: SubmitOrder panics (consumer-code panic must be
 	// contained as that case's evidence, never the batch's crash).

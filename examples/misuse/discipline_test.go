@@ -45,7 +45,7 @@ func TestPhaseAssertingNothingIsVisible(t *testing.T) {
 }
 
 func TestCaseWhereNothingAssertsCannotPass(t *testing.T) {
-	// EVERY phase silent: there is no evidence at all, and no evidence is
+	// Every phase silent: there is no evidence at all, and no evidence is
 	// never a pass.
 	rep := run(t, smallRunner(t, phase.NewPipeline(
 		&sabotagePhase{id: "a"}, &sabotagePhase{id: "b", deps: []phase.ID{"a"}},
@@ -131,10 +131,9 @@ func TestLastAttemptPassIsFlakedWithTheFullTrail(t *testing.T) {
 
 // --- the three budget-error shapes must not impersonate each other -------
 
-// The sentinel trap: all three exhaustion shapes satisfy
-// errors.Is(ErrBudgetExhausted), so a sentinel-only check would pass even
-// if the WRONG one of the three fired. Each test pins the discriminating
-// message shape.
+// All three exhaustion shapes satisfy errors.Is(ErrBudgetExhausted), so a
+// sentinel-only check would pass even if the wrong one of the three
+// fired. Each test checks the discriminating message shape instead.
 
 func budgetErr(t *testing.T, timing phase.Timing, cond func(context.Context) (int, bool, error)) string {
 	t.Helper()
@@ -187,8 +186,8 @@ func TestWallClockExpiryMidCallSaysDuring(t *testing.T) {
 }
 
 func TestInterruptedToleranceNamesTheInterruptionNotExhaustion(t *testing.T) {
-	// G7, pinned to its literal error text like its siblings: a tolerance
-	// cut off mid-retry-sleep is an INTERRUPTION with the actual attempt
+	// This test checks the interrupted-tolerance error text: a tolerance
+	// cut off mid-retry-sleep is an interruption with the actual attempt
 	// count — never dressed up as exhaustion ("all N tolerant attempts"),
 	// never a fabricated final judgement.
 	ph := &sabotagePhase{id: "cut", run: func(ctx context.Context, r *phase.Run) error {
@@ -228,7 +227,7 @@ func TestInterruptedToleranceNamesTheInterruptionNotExhaustion(t *testing.T) {
 // --- PriorEvidence outside the declared dependency scope -----------------
 
 func TestPriorEvidenceOutsideScopeIsAnError(t *testing.T) {
-	// The refusal is the ONLY loud thing here: the summary's zero value
+	// The refusal is the only loud thing here: the summary's zero value
 	// (Recorded:0, Failing:0) reads exactly like "ran clean" — a consumer
 	// who drops the error has silently built a decision on nothing. The
 	// framework's half is refusing with the dependency named; the

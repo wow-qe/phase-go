@@ -10,10 +10,8 @@
 //	name what it failed to compare.
 //
 // `all([])` is true in every language, and the resulting defect is a suite
-// that reports green while checking nothing. The framework this design
-// generalises from patched that shape locally three times and it returned
-// each time, because each fix was an instance rather than the class. Here the
-// class is inexpressible: every field is unexported, so no struct literal can
+// that reports green while checking nothing. That class of bug is
+// inexpressible here: every field is unexported, so no struct literal can
 // construct a pass, and the only path to one — Compared — refuses the empty
 // set.
 //

@@ -19,7 +19,7 @@
 //   - Gutted stops the phase from recording anything at all — "does the
 //     suite notice a phase that asserts nothing?"
 //   - AlwaysPass runs the phase for real but flips every result it records
-//     into a pass — "does this case's verdict actually ride on THIS phase's
+//     into a pass — "does this case's verdict actually ride on this phase's
 //     comparisons?"
 //
 // AlwaysPass rides phase.InterceptRecords, the engine's sanctioned

@@ -11,14 +11,12 @@ import (
 	config "github.com/wow-qe/phase-go/x/config"
 )
 
-// Construction-time sabotage: every misdeclaration must be refused BEFORE
-// anything runs, as a *LoadError pinned by its machine-readable code.
-// Ordered by deviation-risk: the least-tested
-// combinations first.
+// Construction-time misdeclarations: every one must be refused before
+// anything runs, as a *LoadError identified by its machine-readable code.
 
-// Risk #1: a NON-member requiring a group-produced key, with no dependency
-// path through any member. The group's producer is its synthetic setup
-// node; an outsider's reach must not contain it.
+// A non-member phase that requires a group-produced key, with no
+// dependency path through any member. The group's producer is its
+// synthetic setup node, and an outsider's reach must not contain it.
 func TestOutsiderRequiringGroupKeyIsRefused(t *testing.T) {
 	sys := newCheckoutSystem()
 	outsider := &sabotagePhase{
@@ -38,7 +36,7 @@ func TestOutsiderRequiringGroupKeyIsRefused(t *testing.T) {
 	}
 }
 
-// The counterpart that must be PERMITTED: an outsider whose dependency
+// The counterpart that must be permitted: an outsider whose dependency
 // chain passes through a member reaches the group's key legitimately.
 func TestOutsiderReachingGroupKeyThroughMemberIsAccepted(t *testing.T) {
 	sys := newCheckoutSystem()
@@ -57,8 +55,8 @@ func TestOutsiderReachingGroupKeyThroughMemberIsAccepted(t *testing.T) {
 	}
 }
 
-// Risk #2: the phase-vs-group producer collision — one key, two writers
-// across the declaration boundary.
+// The phase-vs-group producer collision: one key, two writers across the
+// declaration boundary.
 func TestPhaseVersusGroupProducerCollisionIsRefused(t *testing.T) {
 	sys := newCheckoutSystem()
 	pirate := &sabotagePhase{
@@ -77,9 +75,9 @@ func TestPhaseVersusGroupProducerCollisionIsRefused(t *testing.T) {
 	}
 }
 
-// Risk #3: the preflight ordering combination — a batch that is BOTH
-// nil-poisoned AND dependency-cyclic must surface the nil first, never a
-// dag-layer panic.
+// The preflight ordering combination: a batch that is both nil-poisoned
+// and dependency-cyclic must surface the nil first, never a dag-layer
+// panic.
 func TestNilCaseWinsOverDependencyCycle(t *testing.T) {
 	sys, cases := misuseSuite(t)
 	a := &cyclicCase{id: "a", dep: "b"}
@@ -97,7 +95,7 @@ func TestCaseDependencyCycleIsRefused(t *testing.T) {
 	wantLoad(t, err, phase.CaseDependencyCycle)
 }
 
-// --- the mechanical A-tier, each pinned by code --------------------------
+// --- mechanical misdeclarations, each identified by code -------------------
 
 func TestDuplicatePhaseIDRefused(t *testing.T) {
 	sys := newCheckoutSystem()
@@ -187,7 +185,7 @@ func TestBrokenRedactPatternRefused(t *testing.T) {
 	wantLoad(t, refuse(t, buildPipeline(sys), cfg), phase.RedactPatternInvalid)
 }
 
-// --- the B-tier: case-shaped misdeclarations -----------------------------
+// --- case-shaped misdeclarations --------------------------------------------
 
 func TestCaseMisdeclarationsRefused(t *testing.T) {
 	sys, cases := misuseSuite(t)
@@ -218,13 +216,13 @@ func TestDependencyAcrossSelectionBoundaryIsExplained(t *testing.T) {
 	}
 }
 
-// --- the manifest tier: x/config strict parsing --------------------------
+// --- manifest parsing: x/config strict parsing ------------------------------
 
 func TestManifestSabotageRefused(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		yaml     string
-		wantCode phase.LoadCode // empty: any error acceptable, pin substring instead
+		wantCode phase.LoadCode // empty: any error acceptable, check substring instead
 		want     string
 	}{
 		{"missing id", "cases:\n  - tags: [x]\n", phase.CaseIDMissing, ""},

@@ -11,13 +11,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Typed keys are how one phase hands a value to a later phase. The source
-// framework did this by mutating a shared case object — four writers for one
-// field, zero-value reads when discovery never ran — and its worst defect
-// chains (empty offers → "all offers OK" → empty expectations → "progression
-// valid") travelled exactly that path. Hence the three properties pinned here:
-// Get fails rather than returning a zero value, one writer per key per run,
-// and the whole store is typed.
+// Typed keys are how one phase hands a value to a later phase. Three
+// properties hold: Get fails rather than returning a zero value for a
+// key that was never produced, at most one phase may Put a given key
+// per run, and the whole store is typed.
 
 var (
 	testRequestID = Declare[string]("test_request_id")

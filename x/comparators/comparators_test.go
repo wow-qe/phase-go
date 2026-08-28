@@ -16,9 +16,8 @@ import (
 	cmp "github.com/wow-qe/phase-go/x/comparators"
 )
 
-// The comparisons every consumer was about to hand-roll, built once on
-// the result package's invariant: a comparison over nothing is a failure
-// with a reason, never a pass.
+// Common comparison logic, built once on the result package's invariant: a
+// comparison over nothing is a failure with a reason, never a pass.
 
 func TestContainsAllPassesWhenEverythingIsThere(t *testing.T) {
 	r := cmp.ContainsAll("ledger rows", []string{"a", "b"}, []string{"b", "a", "c"})
@@ -38,8 +37,8 @@ func TestContainsAllNamesMissingAndExtra(t *testing.T) {
 }
 
 func TestContainsAllOfNothingIsAFailure(t *testing.T) {
-	// The founding rule holds in every comparator: wanting nothing and
-	// checking nothing must never read as a pass.
+	// Every comparator holds this rule: wanting nothing and checking
+	// nothing must never read as a pass.
 	if r := cmp.ContainsAll("ledger rows", []string{}, []string{"a"}); r.Passed() {
 		t.Fatal("containing all of the empty set is zero comparisons — a failure, not a pass")
 	}

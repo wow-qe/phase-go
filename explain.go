@@ -5,16 +5,15 @@ package phase
 
 import "sort"
 
-// Explain answers "what WOULD this run do" without
-// executing anything: the dry-run/explain-plan the assembly-line vocabulary
-// makes nearly free. It SUBSUMES real Preflight — its first act is the same
-// validation Start performs, so every LoadError surfaces here, statically.
+// Explain answers "what would this run do" without executing anything: the
+// dry-run/explain-plan the assembly-line vocabulary makes nearly free. It
+// subsumes Preflight — its first act is the same validation Start performs,
+// so every LoadError surfaces here, statically.
 //
-// Honesty is the design (mirroring NotVerified): each phase's disposition
-// is a THREE-WAY answer — will-run, declined (with the same structured
-// DeclineSource the report uses), or conditional: a When-gated phase's
-// answer genuinely is not knowable statically, and Explain says so instead
-// of claiming false precision.
+// Each phase's disposition is a three-way answer — will-run, declined (with
+// the same structured DeclineSource the report uses), or conditional: a
+// When-gated phase's answer is not knowable statically, and Explain reports
+// that instead of claiming false precision.
 
 type PlanDisposition string
 
@@ -50,7 +49,7 @@ type PhasePlan struct {
 }
 
 // Explain validates exactly as Start would, then projects the plan. It
-// evaluates only the STATIC gates (Enabled, Selects, AppliesTo — all
+// evaluates only the static gates (Enabled, Selects, AppliesTo — all
 // declarative by contract); a phase implementing When is conditional.
 func (r *Runner) Explain(cases []Case) (*Plan, error) {
 	if err := r.Preflight(cases); err != nil {

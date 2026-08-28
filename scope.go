@@ -15,10 +15,10 @@ import (
 // someone investigates the product.
 //
 // Correlation is deliberately separate from Keys. Scope keys make traffic
-// DISTINGUISHABLE in shared state (counters, resets, searches). The
-// correlation value threads one submission THROUGH systems that never share a
-// scope — it is how a queued message is later found in a database row and a
-// ledger entry.
+// distinguishable in shared state (counters, resets, searches). The
+// correlation value threads one submission through systems that never share
+// a scope — it is how a queued message is later found in a database row and
+// a ledger entry.
 type Scope struct {
 	RunID       string
 	CaseID      string

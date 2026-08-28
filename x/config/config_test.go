@@ -221,8 +221,7 @@ func TestLoadMissingFile(t *testing.T) {
 
 func TestDuplicateKeysAreRefused(t *testing.T) {
 	// yaml.v3 is last-wins on duplicates, which means an operator edits the
-	// wrong one and nothing says so. Found by a gate probe, not by this
-	// suite's first version — recorded here so it cannot regress.
+	// wrong one and nothing says so.
 	cases := map[string]string{
 		"in a phase":   "phases:\n  submit: {attempts: 3, attempts: 5}\n",
 		"at top level": "defaults: {attempts: 1}\ndefaults: {attempts: 2}\n",
@@ -243,10 +242,10 @@ func TestDuplicateKeysAreRefused(t *testing.T) {
 }
 
 func TestAliasBombIsRefusedNotExpanded(t *testing.T) {
-	// RefuseDuplicateKeys resolved
-	// aliases and recursed with no visited-set, so a sub-1KB anchor fan-out
-	// drove hours of CPU before any semantic validation. A visited-set + node
-	// budget must refuse it in bounded time.
+	// Resolving aliases and recursing with no visited-set lets a sub-1KB
+	// anchor fan-out expand into an exponential number of nodes. A
+	// visited-set plus a node budget must refuse it in bounded time instead
+	// of burning CPU walking the expansion.
 	var b strings.Builder
 	b.WriteString("phases:\n")
 	b.WriteString("  a0: &a0 [x, x]\n")

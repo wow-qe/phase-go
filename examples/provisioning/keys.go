@@ -6,10 +6,10 @@ package provisioning
 import phase "github.com/wow-qe/phase-go"
 
 // The values phases hand forward, declared once at package init.
-// This example goes beyond the minimum, and
-// adds SettledRows because its settle phase is split in two (settle_wait /
-// settle_checks — see phases.go and the DoD's mutation-gate test), and the
-// wait phase needs a typed key to hand its result to the assertion phase.
+// This example adds SettledRows because its settle phase is split in two
+// (settle_wait / settle_checks — see phases.go and suite_test.go's
+// TestMutationGateGoesRed), and the wait phase needs a typed key to hand
+// its result to the assertion phase.
 var (
 	// RequestID is the correlation value submit allocates and every later
 	// phase looks the request up by.

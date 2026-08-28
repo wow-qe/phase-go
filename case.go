@@ -12,7 +12,7 @@ const (
 	// Active: the case runs.
 	Active CaseStatus = iota
 	// Quarantined: deliberately excluded from the signal — flaky or under
-	// investigation. The established quality-engineering term.
+	// investigation.
 	Quarantined
 	// Blocked: cannot run until something outside the suite changes
 	// (an environment, a product defect, a dependency).
@@ -44,9 +44,7 @@ func ParseStatus(s string) (CaseStatus, error) {
 	v, ok := caseStatusNames[s]
 	if !ok {
 		// A typed LoadError, not a bare error: the taxonomy promises the Load
-		// family maps to exit 2, and StatusUnparsable was declared in that
-		// family but never constructed anywhere - a dead code path the review
-		// gate caught (the constant existed; no path could produce it).
+		// family maps to exit 2.
 		return 0, &LoadError{Code: StatusUnparsable, Subject: s,
 			Detail: "valid: active, quarantined, blocked, draft"}
 	}
@@ -68,7 +66,7 @@ type Case interface {
 	Status() CaseStatus
 
 	// Selects declares whether this case wants the given phase. Declining
-	// REQUIRES a reason — a skip with no recorded reason is indistinguishable
+	// requires a reason — a skip with no recorded reason is indistinguishable
 	// from a check that passed, which is the defect this library exists to
 	// prevent. An empty reason on a false return is a LoadError at preflight.
 	Selects(ID) (bool, string)

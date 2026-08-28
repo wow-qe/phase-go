@@ -10,12 +10,12 @@ import (
 
 // Typed keys are how one phase hands a value to a later phase.
 //
-// The alternative — phases mutating a shared case object — is how the source
-// framework's worst defect chains travelled: four writers for one field,
-// zero-value reads when discovery never ran, and "empty" indistinguishable
-// from "never produced". Hence the three properties enforced here:
+// The alternative — phases mutating a shared case object — allows multiple
+// writers for one field and zero-value reads when a producer never ran,
+// with "empty" indistinguishable from "never produced". Hence the three
+// properties enforced here:
 //
-//  1. Get FAILS when the key was never produced; it does not return a zero
+//  1. Get fails when the key was never produced; it does not return a zero
 //     value. "Discovery never ran" and "discovery found nothing" are
 //     different facts.
 //  2. One writer per key per run. If a value legitimately changes, that is a
@@ -79,8 +79,8 @@ func tryPut[T any](r *Run, k Key[T], v T) error {
 	defer r.core.mu.Unlock()
 	r.core.mustBeOpen("Put", r.phase)
 	// A phase may only Put what it declared in Produces(). Without this the
-	// preflight graph and runtime reality could silently diverge — the review
-	// gate proved a phase could smuggle an undeclared key and still pass.
+	// preflight graph and runtime reality could silently diverge: a phase
+	// could smuggle an undeclared key past validation and still pass.
 	if r.allowed != nil && !r.allowed[k.id] {
 		return &FrameworkError{
 			Invariant: "puts match Produces()",
@@ -114,8 +114,8 @@ func Get[T any](r *Run, k Key[T]) (T, error) {
 	}
 	typed, ok := v.(T)
 	if !ok {
-		// Unreachable while Declare is the only key constructor; kept because
-		// "unreachable" claims have been wrong before in this project.
+		// Unreachable while Declare is the only key constructor; kept as a
+		// defensive check in case that constraint is ever relaxed.
 		return zero, &FrameworkError{
 			Invariant: "typed handoff",
 			Detail:    fmt.Sprintf("key %q holds %T, not the declared type", k.id, v),

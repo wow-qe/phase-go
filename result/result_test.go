@@ -14,9 +14,8 @@ import (
 // failure, never a pass — and it must name what it failed to compare.
 //
 // `all([])` is true in every language, and the resulting defect is a suite
-// that reports green while checking nothing. The source framework patched
-// that shape locally three times and it returned each time. Here it is
-// inexpressible: unexported fields mean no literal can bypass Compared.
+// that reports green while checking nothing. That class of bug is
+// inexpressible here: unexported fields mean no literal can bypass Compared.
 
 func TestZeroComparisonsCannotPass(t *testing.T) {
 	r := result.Compared("private offer states", nil)
@@ -139,9 +138,9 @@ func TestBuilderIsValueSemantics(t *testing.T) {
 func TestNameIsStableIdentity(t *testing.T) {
 	// The name is the stable identity a snapshot diff keys on. The volatile
 	// values live in expected/actual/reason — never in the name. The type
-	// cannot enforce prose discipline, but it CAN keep name and evidence in
-	// separate fields so the discipline is possible; this test pins that the
-	// name survives the builder untouched.
+	// cannot enforce prose discipline, but it keeps name and evidence in
+	// separate fields so the discipline is possible; the name must survive
+	// the builder untouched.
 	r := result.Compared("item state", []bool{false}).WithExpected(3458).WithActual(9999)
 	if r.Name() != "item state" {
 		t.Fatalf("Name() = %q, want the exact constructor argument", r.Name())

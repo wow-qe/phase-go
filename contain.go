@@ -5,12 +5,10 @@ package phase
 
 import "fmt"
 
-// contain is the ONE containment primitive: every entry
-// into consumer code - phases, hooks, conditions, fixture and group
-// lifecycles, observer callbacks - runs under it, so a consumer bug is
-// that case's evidence, never the batch's crash. The six historical copies
-// of this recover pattern collapse here; grep for contain( to enumerate
-// every consumer entry point.
+// contain is the one containment primitive: every entry into consumer code
+// — phases, hooks, conditions, fixture and group lifecycles, observer
+// callbacks — runs under it, so a consumer bug becomes that case's
+// evidence, never the batch's crash.
 func contain(what string, f func() error) (err error) {
 	defer func() {
 		if v := recover(); v != nil {

@@ -46,9 +46,9 @@ func (s *Session) Cases() []CaseReport {
 	return out
 }
 
-// clone deep-copies the evidence slices. C6: a shallow copy shared backing
-// storage, so a consumer redacting or formatting a returned Report silently
-// corrupted the Session for every later Report() call.
+// clone deep-copies the evidence slices: a shallow copy would share backing
+// storage, so a consumer redacting or formatting a returned Report could
+// silently corrupt the Session for every later Report() call.
 func (c CaseReport) clone() CaseReport {
 	c.Phases = append([]PhaseOutcome(nil), c.Phases...)
 	c.Groups = append([]GroupOutcome(nil), c.Groups...)
@@ -67,11 +67,11 @@ func (c CaseReport) clone() CaseReport {
 // pipeline gets exactly one, whatever happened — a phase that did not run
 // says so and says why, because a skip with no record is indistinguishable
 // from a check that passed.
-// The json tags on this and the structs below ARE the stable schema surface
-// they live on the real structs so the compiler links schema to
-// source — the shadow-struct MarshalJSONs they replaced let Results and
-// C1's Curtailed ship invisible to the artifact. TestSchemaSurfaceIsFullyTagged
-// refuses any untagged addition.
+//
+// The json tags on this and the structs below are the stable schema
+// surface: they live on the real struct, so the compiler links schema to
+// source, and TestSchemaSurfaceIsFullyTagged refuses any untagged addition
+// — a field cannot silently go missing from the emitted report.
 type PhaseOutcome struct {
 	ID     ID     `json:"id"`
 	Status Status `json:"status"`
@@ -80,7 +80,7 @@ type PhaseOutcome struct {
 	// nothing (0) must be distinguishable from one that asserted, so the
 	// field is never omitted — zero is the fact it exists to expose.
 	Results int `json:"results_recorded"`
-	// Failing is the sibling count: how many of those results FAILED — closing
+	// Failing is the sibling count: how many of those results failed — closing
 	// the "row says Passed, results say failing" reading gap. Never omitted.
 	Failing int `json:"failing_recorded"`
 	// Stage marks which hook produced a non-ordinary outcome; empty for
@@ -108,17 +108,16 @@ type GroupOutcome struct {
 	Recorded int    `json:"results_recorded"`
 }
 
-// CaseReport is the derived record of one case. Status is computed in exactly
-// one place (deriveStatus) from the recorded evidence — nine independent
-// writers of a final result is how the source framework came to need a
-// reconciliation pass to repair its own reports.
+// CaseReport is the derived record of one case. Status is computed in
+// exactly one place (deriveStatus) from the recorded evidence: a single
+// writer, so the status can never diverge from what was recorded.
 type CaseReport struct {
 	CaseID            string             `json:"id"`
 	Correlation       string             `json:"correlation,omitempty"` // Scope.Correlation - joins this report to the system's own logs
 	Status            Status             `json:"status"`
 	Reason            string             `json:"reason,omitempty"`    // for Skipped/Errored: what happened
 	FailedIn          ID                 `json:"failed_in,omitempty"` // first phase that recorded a failing result
-	Curtailed         bool               `json:"curtailed,omitempty"` // C1: cancelled mid-flight; the result stands, the interruption reaches the artifact
+	Curtailed         bool               `json:"curtailed,omitempty"` // cancelled mid-flight; the result stands, the interruption reaches the artifact
 	Phases            []PhaseOutcome     `json:"phases"`
 	Results           []AttributedResult `json:"results"`
 	Groups            []GroupOutcome     `json:"groups,omitempty"`             // one row per registered group this case touched (or visibly did not)

@@ -46,7 +46,7 @@ func (c *Clock) Advance(d time.Duration) {
 // test runs a 20×15s budget in microseconds instead of five minutes.
 func (c *Clock) Sleeper() func(context.Context, time.Duration) error {
 	return func(ctx context.Context, d time.Duration) error {
-		// Production sleep does NOT advance time when ctx is already
+		// Production sleep does not advance time when ctx is already
 		// cancelled; the fake clock must match, or elapsed-time assertions
 		// around cancellation see a clock that ran further than reality.
 		if err := ctx.Err(); err != nil {

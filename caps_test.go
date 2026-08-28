@@ -11,8 +11,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// ONE capability table governs what each stage may
-// do — replacing the piecemeal gates whose nil-polarity disagreed.
+// One capability table (stageCaps) governs what each stage may do; it is
+// authoritative, so a stage attempting an undeclared capability (recording,
+// observing, Put, prior-evidence access) is a framework violation, not a
+// silently permitted no-op.
 
 func TestGroupTeardownCannotPut(t *testing.T) {
 	// Nothing runs after teardown to consume a Put — the matrix denies it,
@@ -37,8 +39,8 @@ func TestGroupTeardownCannotPut(t *testing.T) {
 	if !found {
 		t.Fatalf("the violation must name itself; errors = %+v", cr.Errors)
 	}
-	// The GROUP row must say it too - "which group had
-	// trouble" must never require cross-referencing the error arrays.
+	// The group outcome must also report the failure, so "which group had
+	// trouble" never requires cross-referencing the error arrays.
 	g := cr.Groups[0]
 	if g.Status != Errored || !strings.Contains(g.Reason, "teardown") {
 		t.Fatalf("group outcome = %+v — a lifecycle capability violation IS a lifecycle failure", g)
@@ -78,11 +80,11 @@ func TestWhenCannotPut(t *testing.T) {
 }
 
 func TestCapabilityMatrixMatchesTheDocumentedTable(t *testing.T) {
-	// The matrix is CODE (the docs render from it); this pins the
-	// documented shape so a drive-by capability change fails a test.
+	// stageCaps is the source the docs render from; this asserts its shape
+	// so a change to a stage's capabilities is caught by a test.
 	want := map[stageKind]capability{
 		stageFixtureSetup:    capRecord | capObserve | capPut | capGet,
-		stageFixtureTeardown: capRecord | capObserve | capGet, // engine follow-up: same no-downstream rationale as group teardown
+		stageFixtureTeardown: capRecord | capObserve | capGet, // same no-downstream rationale as group teardown
 		stageSession:         capRecord | capObserve | capGet,
 		stageGroupSetup:      capRecord | capObserve | capPut | capGet,
 		stageGroupTeardown:   capRecord | capObserve | capGet,

@@ -16,11 +16,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// The report is the product. Verify() is an assertion, not a repair: if it
-// fires, phase has a bug and the numbers cannot be trusted — the source
-// framework's reconciliation pass existed to repair reports its own
-// architecture corrupted, and deriving outcomes from evidence removes the
-// cause while Verify removes the doubt.
+// The report is the product. Verify() is an assertion, not a repair: if
+// it fires, phase has a bug and the numbers cannot be trusted. Deriving
+// outcomes from evidence removes the cause of corruption; Verify removes
+// the doubt.
 
 func mixedSession(t *testing.T) *Session {
 	t.Helper()
@@ -155,16 +154,15 @@ func TestJSONCarriesTheSchemaAndTheEvidence(t *testing.T) {
 		`"failed_in": "settle"`, // the consumer's policy switch
 		`"disabled"`,            // the operator switch is visible
 		`"case status: quarantined"`,
-		// Review finding #3: EntityRef and Observation had neither tags nor
-		// MarshalJSON, so Go field names leaked into the schema surface —
-		// {"Kind":...} where the schema documents {"kind":...} — and no test pinned
-		// the casing, so the break shipped invisibly. Pinned now.
+		// EntityRef and Observation JSON output must use the documented
+		// lower_snake keys ({"kind":...}), never the Go field spelling
+		// ({"Kind":...}).
 		// (indented output: keys assert individually, casing is the point)
 		`"kind": "entity"`,
 		`"id": "3458"`,
 		`"observations"`,
 		`"value"`,
-		// Per-phase result counts must reach the ARTIFACT, not just the
+		// Per-phase result counts must reach the artifact, not just the
 		// in-memory struct — the report is the product.
 		`"results_recorded"`,
 	} {
@@ -180,9 +178,9 @@ func TestJSONCarriesTheSchemaAndTheEvidence(t *testing.T) {
 }
 
 func TestNotVerifiedNamesDeliberateCoverageLoss(t *testing.T) {
-	// The report states what it did NOT verify. An operator-disabled
-	// phase is exactly that, and it must be said once, loudly — not left to
-	// be summed out of per-case rows.
+	// The report states what it did not verify. An operator-disabled
+	// phase is exactly that, and it must be said once, loudly — not left
+	// to be summed out of per-case rows.
 	rep := mixedSession(t).Report()
 	found := false
 	for _, line := range rep.NotVerified {
@@ -207,8 +205,8 @@ func TestMarshallingIsDeterministic(t *testing.T) {
 	}
 }
 
-func TestVerifyCatchesTheReviewersCorruptions(t *testing.T) {
-	// Corruptions beyond the first four probes. Pinned here.
+func TestVerifyCatchesHandCorruptedReports(t *testing.T) {
+	// Additional report corruptions that Verify must catch.
 	t.Run("a Flaked case with no evidence", func(t *testing.T) {
 		rep := mixedSession(t).Report()
 		rep.Cases[0].Status = Flaked
@@ -230,7 +228,7 @@ func TestVerifyCatchesTheReviewersCorruptions(t *testing.T) {
 			}
 		}
 		// A Failed case whose reason says cancelled but Curtailed is false is
-		// the C1 defect hiding: Verify must catch it.
+		// must be caught by Verify.
 		if rep.Verify() == nil {
 			t.Skip("only meaningful once a cancelled-failed case is present")
 		}
@@ -245,9 +243,9 @@ func TestVerifyCatchesTheReviewersCorruptions(t *testing.T) {
 }
 
 func TestNotVerifiedMatchIsAnchoredNotSubstring(t *testing.T) {
-	// Re-review probe, pinned: phase "settle_wait" Disabled while NotVerified
-	// names only "settle_wait_extended". The bare-substring check accepted
-	// that as disclosure; the quoted-id anchor must not.
+	// Phase "settle_wait" is Disabled while NotVerified names only
+	// "settle_wait_extended". A bare-substring check would wrongly accept
+	// that as disclosure; the match must be anchored on the quoted id.
 	rep := mixedSession(t).Report()
 	for i := range rep.Cases {
 		for j := range rep.Cases[i].Phases {
@@ -263,9 +261,9 @@ func TestNotVerifiedMatchIsAnchoredNotSubstring(t *testing.T) {
 }
 
 func TestOneBadFloatDoesNotVoidTheWholeReport(t *testing.T) {
-	// WriteJSON is all-or-nothing; a NaN in one case's Actual lost every
-	// other case's evidence. The report must degrade the offending value, not
-	// vanish entirely.
+	// A NaN in one case's Actual must not cost every other case's
+	// evidence: WriteJSON degrades the offending value rather than
+	// failing for the whole report.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			if run.Case().ID() == "nan" {
@@ -287,10 +285,10 @@ func TestOneBadFloatDoesNotVoidTheWholeReport(t *testing.T) {
 }
 
 func TestAFailingResultMustExplainItself(t *testing.T) {
-	// A failing result carrying NOTHING — no reason, no expected, no
-	// actual — tells a debugger nothing and is indistinguishable from a real
-	// one. Verify must flag it. (Reachable only by hand-corruption: every
-	// result constructor guarantees a failing result a reason.)
+	// A failing result carrying nothing — no reason, no expected, no
+	// actual — tells a debugger nothing and is indistinguishable from a
+	// real one. Verify must flag it. (Reachable only by hand-corruption:
+	// every result constructor guarantees a failing result a reason.)
 	rep := mixedSession(t).Report()
 	for i := range rep.Cases {
 		for j := range rep.Cases[i].Results {
@@ -329,9 +327,9 @@ func TestABareFailingComparisonIsAProductFailureNotAFrameworkBug(t *testing.T) {
 }
 
 func TestCurtailmentSurvivesSerialisation(t *testing.T) {
-	// Same gap class: Curtailed existed on the Go struct
-	// but not in the MarshalJSON shadow, so the report artifact — the thing CI
-	// and readers consume — never showed the interruption.
+	// Curtailed must be present in the MarshalJSON shadow, not only the
+	// Go struct, so the report artifact — the thing CI and readers
+	// consume — shows the interruption.
 	ctx, cancel := context.WithCancel(context.Background())
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "settle"}, do: func(_ context.Context, run *Run) error {
@@ -354,14 +352,9 @@ func TestCurtailmentSurvivesSerialisation(t *testing.T) {
 }
 
 func TestSchemaSurfaceIsFullyTagged(t *testing.T) {
-	// The schema surface must not live in hand-maintained shadow
-	// structs with no compiler link to their sources — a field added to the
-	// Go struct and forgotten in the shadow silently dropped from JSON
-	// (that is how fields ship invisible). The
-	// tags now live ON the real structs; this test is the mechanical link:
-	// every exported field of every schema-surface struct must carry an
-	// explicit json tag, so an untagged addition fails here instead of
-	// leaking a Go spelling into the stable schema.
+	// Every exported field of every schema-surface struct must carry an
+	// explicit json tag on the struct itself, so an untagged addition
+	// fails here instead of leaking a Go spelling into the stable schema.
 	for _, typ := range []reflect.Type{
 		reflect.TypeOf(Report{}),
 		reflect.TypeOf(Summary{}),

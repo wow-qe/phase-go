@@ -13,10 +13,9 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// The group lifecycle is a typed, checked state
-// machine (the one entity with a documented TOCTOU-prone spot), and the
-// assembly line is pinned as a TRACE — exact in sequential mode, multiset +
-// partial-order under concurrency.
+// The group lifecycle is a typed, checked state machine, and the assembly
+// line is checked as a trace: exact in sequential mode, and a multiset
+// plus partial order under concurrency.
 
 func TestGroupMachineRefusesIllegalTransitions(t *testing.T) {
 	m := newMachine(groupPending, groupTransitions)
@@ -34,9 +33,10 @@ func TestGroupMachineRefusesIllegalTransitions(t *testing.T) {
 }
 
 func TestGroupLifecycleRidesTheMachine(t *testing.T) {
-	// The booleans are gone: the machine's states drive the outcome, and
-	// the existing behavioral suite (setup-once, teardown-always, barrier)
-	// must hold unchanged on top of it. This test pins the states' mapping.
+	// The machine's states drive the group's outcome, and the existing
+	// behavioral suite (setup-once, teardown-always, barrier) must hold
+	// unchanged on top of it. This test asserts the states' mapping to
+	// that outcome.
 	var j []string
 	r := groupRunner(t, &j,
 		Group{ID: "g", Members: []ID{"m"},

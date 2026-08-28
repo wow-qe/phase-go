@@ -109,4 +109,4 @@ func TestSpyRecorderIsConcurrencySafe(t *testing.T) {
 	}
 }
 
-var _ phase.Recorder = (*phasetest.SpyRecorder)(nil) // compile-time proof
+var _ phase.Recorder = (*phasetest.SpyRecorder)(nil) // compile-time interface check

@@ -13,8 +13,8 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// The unified stream and its pinned delivery
-// contract — the consumer-facing lifecycle contract.
+// The event stream is the consumer-facing lifecycle contract: a fixed
+// delivery order for every kind of event.
 
 type eventSink struct {
 	events []Event
@@ -138,7 +138,7 @@ func TestRetryAttemptsAreLive(t *testing.T) {
 		}
 	}
 	// Attempts 1 and 2 were not-done; the third succeeded (no heartbeat
-	// after success — the silence that follows IS the signal).
+	// after success — the silence that follows is the signal).
 	if got := strings.Join(polls, ","); got != "poll:1/5,poll:2/5" {
 		t.Fatalf("retry heartbeats = %q", got)
 	}
@@ -204,8 +204,8 @@ func (noopFix) Setup(context.Context, *Run) error    { return nil }
 func (noopFix) Teardown(context.Context, *Run) error { return nil }
 
 func TestPhaseFinishedReasonIsRedactedAtEmission(t *testing.T) {
-	// PhaseOutcome.Reason is where raw adapter error text
-	// lands, and PhaseFinished was the one event skipping redactString.
+	// PhaseOutcome.Reason is where raw adapter error text lands; every
+	// event, including PhaseFinished, must apply redactString to it.
 	dsn := "postgres://qe:s3cr3t@db.internal/x"
 	r := mustRunner(t, Config{
 		Defaults:       validTiming(),

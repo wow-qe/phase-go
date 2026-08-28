@@ -15,12 +15,12 @@ import (
 	config "github.com/wow-qe/phase-go/x/config"
 )
 
-// A QE who is not Go-fluent authors cases in YAML. The loader is a
-// consumer FACTORY's scaffolding — spec + fixture-name registry — never a
-// generic Case decoder: behavior stays with the consumer, declaration
-// becomes data. Every refusal is a typed LoadError at load time, because a
-// manifest typo that silently does nothing is the defect class this whole
-// library exists against.
+// A quality engineer who is not Go-fluent authors cases in YAML. The loader
+// is scaffolding for a consumer factory — spec + fixture-name registry —
+// never a generic Case decoder: behavior stays with the consumer,
+// declaration becomes data. Every refusal is a typed LoadError at load
+// time, because a manifest typo that silently does nothing is the defect
+// class this whole library exists against.
 
 const manifest = `
 cases:

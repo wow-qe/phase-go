@@ -79,18 +79,17 @@ func TestClockSleeperReturnsCtxErr(t *testing.T) {
 	if err := sleep(ctx, time.Second); !errors.Is(err, context.Canceled) {
 		t.Fatalf("sleep() with cancelled ctx = %v, want context.Canceled", err)
 	}
-	// On an already-cancelled context the clock must NOT advance, matching
+	// On an already-cancelled context the clock must not advance, matching
 	// production sleep (run.go), which returns ctx.Err() without consuming the
-	// interval. The prior version of this test asserted the opposite and so
-	// encoded the very fidelity gap the review flagged.
+	// interval.
 	if got := c.Now(); !got.Equal(start) {
 		t.Fatalf("Now() after cancelled sleep = %v, want %v (no advance on a cancelled ctx)", got, start)
 	}
 }
 
-// TestSleeperDrivesWaitUntilInstantly is the required end-to-end proof: a
-// real phase.WaitUntil with a 20×15s budget must finish in microseconds when
-// driven by phasetest.Clock, and budget exhaustion must still be reported
+// TestSleeperDrivesWaitUntilInstantly runs a real phase.WaitUntil with a
+// 20×15s budget driven by phasetest.Clock: it must finish in microseconds
+// instead of the real 300s, and budget exhaustion must still be reported
 // correctly (ErrBudgetExhausted, naming the budget).
 func TestSleeperDrivesWaitUntilInstantly(t *testing.T) {
 	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -120,7 +119,7 @@ func TestSleeperDrivesWaitUntilInstantly(t *testing.T) {
 	if elapsed > 200*time.Millisecond {
 		t.Fatalf("WaitUntil took %v real time for a 20×15s budget — the sleeper is blocking instead of advancing the clock", elapsed)
 	}
-	// 20 attempts sleep BETWEEN attempts only: 19 sleeps of 15s each.
+	// 20 attempts sleep between attempts only: 19 sleeps of 15s each.
 	wantClock := start.Add(19 * 15 * time.Second)
 	if got := c.Now(); !got.Equal(wantClock) {
 		t.Fatalf("clock ended at %v, want %v (19×15s of advances)", got, wantClock)

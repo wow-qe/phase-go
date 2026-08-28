@@ -1,11 +1,10 @@
 // Copyright 2026 The Phase Contributors
 // SPDX-License-Identifier: MIT
 
-// Package checkout is the FLAGSHIP consumer example: one order-checkout
-// flow exercising every feature the library ships, deterministic and
-// offline. It is the compatibility canary — if a change breaks this
-// package, the change is breaking by definition — and the feature map in
-// README.md indexes where each capability is proven.
+// Package checkout is a consumer example: one order-checkout flow
+// exercising every feature the library ships, deterministic and offline.
+// It acts as a compatibility canary for the library — the feature map in
+// README.md indexes where each capability is exercised.
 package checkout
 
 import (
@@ -23,12 +22,12 @@ import (
 type checkoutSystem struct {
 	mu sync.Mutex
 
-	// catalogSeeds is a LEASE COUNT, not a boolean: under MaxCaseConcurrency
-	// several cases hold the catalog at once, and a boolean fixture is the
-	// classic non-scope-partitioned trap — one case's teardown clobbers a
-	// concurrent case's precondition (a rare race:
-	// billing-report failing submit's Before under concurrency). Each
-	// case's fixture takes and releases its own lease instead.
+	// catalogSeeds is a lease count, not a boolean: under
+	// MaxCaseConcurrency several cases hold the catalog at once, and a
+	// boolean fixture flag is not safe under concurrent cases — one
+	// case's teardown can clear a precondition a concurrent case still
+	// needs. Each case's fixture takes and releases its own lease
+	// instead.
 	catalogSeeds int
 	healthy      bool
 
@@ -38,7 +37,7 @@ type checkoutSystem struct {
 
 	// settlePollsNeeded: how many settlement polls before entities settle.
 	settlePollsNeeded int
-	// flapLedgerCount: when true, the FIRST ledger-count read returns one
+	// flapLedgerCount: when true, the first ledger-count read returns one
 	// row short (the tolerated flake), correct afterwards.
 	flapLedgerCount bool
 	flapConsumed    bool

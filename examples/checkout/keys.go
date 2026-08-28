@@ -12,7 +12,7 @@ var (
 	OrderID = phase.Declare[string]("checkout_order_id")
 	// AuthCode: authorize produces.
 	AuthCode = phase.Declare[string]("checkout_auth_code")
-	// StreamCursor is produced by the SETTLEMENT GROUP's lifecycle setup —
+	// StreamCursor is produced by the settlement group's lifecycle setup —
 	// the group-Produces feature: members may require it, outsiders are
 	// refused at preflight.
 	StreamCursor = phase.Declare[string]("checkout_stream_cursor")

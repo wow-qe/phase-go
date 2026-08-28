@@ -104,7 +104,7 @@ func TestGroupSetupFailureErrorsMembersAndPrunesTheirDependents(t *testing.T) {
 		journalPhase("submit", &j),
 		journalPhase("settle_wait", &j, "submit"),
 		journalPhase("settle_checks", &j, "settle_wait"),
-		journalPhase("audit", &j, "settle_checks"), // structurally depends on a MEMBER
+		journalPhase("audit", &j, "settle_checks"), // structurally depends on a member
 		journalPhase("independent", &j, "submit"),  // no group relation — must run
 	)
 	cr := caseReport(t, startSession(t, r, &stubCase{id: "one"}), "one")
@@ -114,9 +114,8 @@ func TestGroupSetupFailureErrorsMembersAndPrunesTheirDependents(t *testing.T) {
 			t.Fatalf("member %s = %+v — the world could not be built: Errored, cause named", id, po)
 		}
 	}
-	// The engine lens's correction: a phase depending on a MEMBER must be
-	// transitively pruned — execution must not continue past a failed group
-	// precondition.
+	// A phase depending on a group member must be transitively pruned:
+	// execution must not continue past a failed group precondition.
 	if po := phaseOutcome(t, cr, "audit"); po.Status != NotApplicable || !strings.Contains(po.Reason, "errored") {
 		t.Fatalf("audit = %+v, want pruned with the cause named", po)
 	}
@@ -129,8 +128,8 @@ func TestGroupSetupFailureErrorsMembersAndPrunesTheirDependents(t *testing.T) {
 	if len(cr.Groups) != 1 || cr.Groups[0].Status != Errored || !strings.Contains(cr.Groups[0].Reason, "setup failed") {
 		t.Fatalf("groups = %+v", cr.Groups)
 	}
-	// Teardown still ran: setup was ATTEMPTED (fixture precedent — a partial
-	// setup may hold resources).
+	// Teardown still ran: setup was attempted, and a partial setup may
+	// hold resources that need releasing.
 	if got := strings.Join(j, " | "); !strings.Contains(got, "g:teardown") {
 		t.Fatalf("teardown must run when setup was attempted; journal = %q", got)
 	}
@@ -310,8 +309,8 @@ func TestGroupsReachTheArtifact(t *testing.T) {
 }
 
 func TestSettingsSubIsLoudlyRefused(t *testing.T) {
-	// The inert Settings.Sub stub is superseded by Group — and superseded
-	// LOUDLY: config that still says `sub:` fails at load, never no-ops.
+	// Settings.Sub is superseded by Group; config that still sets `sub:`
+	// fails at load rather than silently becoming a no-op.
 	_, err := NewRunner(NewPipeline(&stubPhase{id: "a"}), Config{
 		Defaults: validTiming(),
 		Phases:   map[ID]Settings{"a": {Sub: map[ID]Settings{"a.x": {}}}},

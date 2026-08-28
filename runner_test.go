@@ -12,9 +12,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Start is where every teardown-and-containment guarantee lives: teardown on every path, panic
-// containment, cancellation as Errored-not-Failed, dependent-phase pruning,
-// and a SINGLE derivation of each case's outcome from its recorded evidence.
+// Start is where every teardown-and-containment guarantee lives:
+// teardown on every path, panic containment, cancellation as
+// Errored-not-Failed, dependent-phase pruning, and a single derivation
+// of each case's outcome from its recorded evidence.
 
 // recordingPhase runs a callback and journals the visit.
 type recordingPhase struct {
@@ -121,7 +122,7 @@ func TestCaseSelectingOutIsNotApplicableWithTheReason(t *testing.T) {
 }
 
 func TestOperatorDisabledPhaseIsDisabledNotNotApplicable(t *testing.T) {
-	// Deliberate coverage loss must be visible AS deliberate: an
+	// Deliberate coverage loss must be visible as deliberate: an
 	// operator switch and a case declaration are different facts.
 	off := false
 	var visits []ID
@@ -401,11 +402,12 @@ func phaseOutcome(t *testing.T, cr CaseReport, id ID) PhaseOutcome {
 	return PhaseOutcome{}
 }
 
-// --- review-gate findings, pinned before fixing -----------------------------
+// --- panic containment, timestamp integrity, and key declaration ----------
 
-// Package-level on purpose: Declare panics on re-registration BY DESIGN, and a
-// Declare inside a test body panics under -count=2, aborting the whole binary
-// on its second run — the convention keys_run_test.go already established.
+// Package-level on purpose: Declare panics on re-registration by design,
+// and a Declare inside a test body panics under -count=2, aborting the
+// whole binary on its second run — the convention keys_run_test.go
+// already established.
 var lyingKey = Declare[string]("undeclared_by_anyone")
 
 type panickyTeardown struct{}
@@ -416,10 +418,9 @@ func (f *panickyTeardown) Teardown(context.Context, *Run) error {
 }
 
 func TestATeardownPanicDoesNotTakeDownTheBatch(t *testing.T) {
-	// Review finding #1: teardownFixtures had no recovery, unlike runOnePhase
-	// — so a panicking Teardown propagated out of Start and aborted every
-	// remaining case, contradicting runCase's own "a batch must survive any
-	// single case".
+	// teardownFixtures must recover from a panic like runOnePhase does, so
+	// a panicking Teardown cannot propagate out of Start and abort the
+	// remaining cases.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	s := startSession(t, r,
 		&stubCase{id: "leaky", fixtures: []Fixture{&panickyTeardown{}}},
@@ -434,9 +435,9 @@ func TestATeardownPanicDoesNotTakeDownTheBatch(t *testing.T) {
 }
 
 func TestCaseReportFinishedIsActuallySet(t *testing.T) {
-	// Review finding #2: `defer func() { cr.Finished = ... }()` mutated the
-	// local AFTER `return cr` had copied it out — dead code, masked by the
-	// determinism test normalising Finished away before comparing.
+	// CaseReport.Finished must actually be set on the returned value, not
+	// only on a local copy that the return statement has already copied
+	// out.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	s := startSession(t, r, &stubCase{id: "happy"})
 	cr := caseReport(t, s, "happy")
@@ -449,9 +450,10 @@ func TestCaseReportFinishedIsActuallySet(t *testing.T) {
 }
 
 func TestPutOfAnUndeclaredKeyIsRefused(t *testing.T) {
-	// Review finding #4: tryPut enforced "one writer per key" but never that
-	// the writer DECLARED the key in Produces() — so a phase could lie about
-	// its wiring and preflight's graph would silently diverge from runtime.
+	// tryPut must enforce not only "one writer per key" but also that the
+	// writer declared the key in Produces(); otherwise a phase could lie
+	// about its wiring and preflight's graph would silently diverge from
+	// runtime.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit", produces: []KeyID{}},
 			do: func(_ context.Context, run *Run) error {
@@ -470,8 +472,7 @@ func TestPutOfAnUndeclaredKeyIsRefused(t *testing.T) {
 }
 
 func TestASetupPanicIsContainedToo(t *testing.T) {
-	// Found by symmetry while fixing the teardown gap: Setup had the
-	// identical uncontained-panic hole Teardown had.
+	// Setup must contain a panic the same way Teardown does.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	s := startSession(t, r,
 		&stubCase{id: "explosive", fixtures: []Fixture{&panickySetup{}}},
@@ -493,9 +494,10 @@ func (panickySetup) Teardown(context.Context, *Run) error { return nil }
 // --- cancellation vs a real failing result --------------------------------
 
 func TestCancellationAfterAFailureKeepsFailedButRecordsCurtailment(t *testing.T) {
-	// A genuine guarantee-conflict: a CI deadline landing AFTER
-	// a phase found a real failing result. Reporting Errored would HIDE the
-	// defect, so the case stays Failed — but the curtailment must be visible.
+	// A genuine guarantee-conflict: a CI deadline landing after a phase
+	// found a real failing result. Reporting Errored would hide the
+	// defect, so the case stays Failed — but the curtailment must be
+	// visible.
 	ctx, cancel := context.WithCancel(context.Background())
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "settle"}, do: func(_ context.Context, run *Run) error {
@@ -538,7 +540,7 @@ func TestCancellationBeforeAnyFailureIsErrored(t *testing.T) {
 	}
 }
 
-// --- C7/C8: preflight refuses duplicate IDs and nil cases -------------------
+// --- preflight refuses duplicate IDs and nil cases -------------------------
 
 func TestDuplicateCaseIDRefused(t *testing.T) {
 	r := mustRunner(t, Config{Defaults: validTiming()}, &stubPhase{id: "submit"})
@@ -552,7 +554,7 @@ func TestNilCaseRefusedNotPanicked(t *testing.T) {
 	_ = wantCode(t, err, NilCase)
 }
 
-// --- C6: a returned Report must not alias the Session's evidence ------------
+// --- a returned Report must not alias the Session's evidence --------------
 
 func TestReportDoesNotAliasSessionEvidence(t *testing.T) {
 	r := mustRunner(t, Config{Defaults: validTiming()},
@@ -573,10 +575,10 @@ func TestReportDoesNotAliasSessionEvidence(t *testing.T) {
 // --- a phase that ran but asserted nothing must be visible ----------------
 
 func TestAPhaseThatAssertedNothingIsVisibleInItsOutcome(t *testing.T) {
-	// The founding defect, one level down: a phase whose Run returns nil having
-	// recorded zero results reports Passed, byte-identical to one that
-	// asserted. Assertion coverage can erode phase-by-phase invisibly. The
-	// PhaseOutcome must record how many results the phase produced.
+	// A phase whose Run returns nil having recorded zero results must not
+	// report Passed byte-identical to one that asserted: assertion
+	// coverage can erode phase-by-phase invisibly unless PhaseOutcome
+	// records how many results the phase produced.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "asserts"}, do: func(_ context.Context, run *Run) error {
 			run.Record(result.Compared("real check", []bool{true}))
@@ -596,8 +598,8 @@ func TestAPhaseThatAssertedNothingIsVisibleInItsOutcome(t *testing.T) {
 	if empty.Results != 0 {
 		t.Fatalf("asserts_nothing recorded %d results, want 0", empty.Results)
 	}
-	// The two must NOT be indistinguishable: an asserting phase and an empty
-	// one carry different, inspectable outcomes.
+	// The two must not be indistinguishable: an asserting phase and an
+	// empty one carry different, inspectable outcomes.
 	if real.Results == empty.Results {
 		t.Fatal("an asserting phase and an empty phase are indistinguishable in the report")
 	}

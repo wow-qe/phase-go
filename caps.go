@@ -5,13 +5,12 @@ package phase
 
 import "fmt"
 
-// ONE capability table says what each stage of the
-// machinery may do with a Run handle. It replaces gates that grew
-// field-by-field and disagreed about polarity (allowed==nil meant
-// unrestricted Put while depScope==nil meant PriorEvidence refused).
-// The table is CODE: the doc renders from it and a test pins it.
+// capability is a table of what each stage of the machinery may do with a
+// Run handle: one table, defined as data, so a stage's permissions can be
+// read at a glance, rendered into documentation, and pinned by a test.
 //
-// Fail is deliberately ungated — it IS the violation channel.
+// Fail is deliberately ungated — it is the violation channel itself, not a
+// capability that could be revoked.
 
 type capability uint8
 

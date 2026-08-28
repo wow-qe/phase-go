@@ -18,11 +18,11 @@ import (
 //
 // The three methods are three different facts, kept distinct on purpose:
 //
-//	Record   what was DECIDED — a comparison's outcome, with evidence
-//	Observe  what was SEEN — a row, a response, a message, pre-judgement
-//	Fail     the environment broke — an error is NOT a failed comparison
+//	Record   what was decided — a comparison's outcome, with evidence
+//	Observe  what was seen — a row, a response, a message, pre-judgement
+//	Fail     the environment broke — an error is not a failed comparison
 //
-// Recording into a case whose verdict has already been derived PANICS
+// Recording into a case whose verdict has already been derived panics
 // (testing.T's choice for Log-after-test, for the same reason): evidence
 // silently dropped after completion is a hole in the report nobody can see.
 // A goroutine a phase spawns must finish before the phase returns, or carry
@@ -72,7 +72,7 @@ type runCore struct {
 // Run is one case's journey through the phases: immutable inputs, write-only
 // evidence, and the typed handoff store.
 //
-// A Run handed to a phase is a VIEW bound to that phase at
+// A Run handed to a phase is a view bound to that phase at
 // construction — attribution is a property of the handle, not of a mutable
 // "current phase" field read at record time. A recording that outlives its
 // phase (a stashed handle, a goroutine, a parallel scheduler) is therefore
@@ -108,7 +108,7 @@ type Run struct {
 	stage         stageKind
 	capViolations int
 
-	// intercept, when set, transforms every result this HANDLE records before
+	// intercept, when set, transforms every result this handle records before
 	// it reaches the ledger. It exists for exactly one caller: the AlwaysPass
 	// mutation gate (phasetest), installed through the sanctioned
 	// InterceptRecords test hook. View-scoped on purpose — an interception
@@ -196,7 +196,7 @@ func (c *runCore) mustBeOpen(what string, phase ID) {
 	}
 }
 
-// drain seals the ledger and returns its contents under ONE lock
+// drain seals the ledger and returns its contents under one lock
 // acquisition: no straggler can slip evidence in between "the verdict reads
 // the ledger" and "the ledger closes". Recording after drain panics via
 // mustBeOpen.
@@ -207,7 +207,7 @@ func (c *runCore) drain() (results []attributedResult, obs []Observation, errs [
 	results = append([]attributedResult(nil), c.results...)
 	obs = append([]Observation(nil), c.observations...)
 	// Deterministic topological order, whatever order completion (or,
-	// under concurrency, lock acquisition) appended in. STABLE, so a single
+	// under concurrency, lock acquisition) appended in. Stable, so a single
 	// handle's own call order is preserved within its rank.
 	sort.SliceStable(results, func(i, j int) bool { return results[i].rank < results[j].rank })
 	sort.SliceStable(obs, func(i, j int) bool { return obs[i].rank < obs[j].rank })
@@ -262,10 +262,9 @@ func (r *Run) Observe(name string, value any) {
 	})
 }
 
-// TranscriptEntry is one adapter exchange kept as evidence:
-// calls the transcript "the single highest-value diagnostic". Structured, so
-// a reader can diff request/response across attempts instead of parsing
-// prose.
+// TranscriptEntry is one adapter exchange kept as evidence: request and
+// response, structured, so a reader can diff them across attempts instead
+// of parsing prose.
 type TranscriptEntry struct {
 	Op       string `json:"op"`
 	Request  any    `json:"request,omitempty"`
@@ -300,7 +299,7 @@ func (r *Run) Fail(err error) {
 //	rows, ok := phase.Require(r, rows, err)
 //	if !ok { return nil }
 //
-// (Go permits f(g()) only when g supplies ALL of f's arguments, so the
+// (Go permits f(g()) only when g supplies all of f's arguments, so the
 // adapter call cannot be inlined past the Recorder parameter — the
 // two-line form above is the pattern.)
 //
@@ -325,7 +324,7 @@ func (r *Run) markFlake(desc string) {
 	r.core.flakes = append(r.core.flakes, desc)
 }
 
-// failingRecorded counts the failing results recorded so far under THIS
+// failingRecorded counts the failing results recorded so far under this
 // handle's phase - the executePhase probe that keeps a recorded
 // precondition violation out of the environment-error channel.
 func (r *Run) failingRecorded() int {

@@ -273,7 +273,7 @@ func TestDuplicateJSONKeysRefusedOnCapture(t *testing.T) {
 
 func TestValueEqualToKeyIsNotADuplicate(t *testing.T) {
 	// Guard against a toggle bug: a string
-	// VALUE equal to a key name must not read as a duplicate key.
+	// value equal to a key name must not read as a duplicate key.
 	ok := []byte(`{"schema_version":"1","cases":[{"id":"status","status":"status","phases":[{"id":"p","status":"passed"}],"results":[{"phase":"p","result":{"name":"status","passed":true,"comparisons":1}}]}],"summary":{},"not_verified":[]}`)
 	if _, err := captureSnapshot(ok); err != nil {
 		t.Fatalf("legitimate report false-rejected: %v", err)

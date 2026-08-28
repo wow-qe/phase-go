@@ -14,10 +14,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Two knobs, defaulting to today's sequential
-// behaviour. Same-DAG-level phases may overlap within a case; cases may
-// overlap within a session, honouring Exclusive() and the case DAG. The
-// REPORT stays deterministic whatever the interleaving.
+// Two knobs, defaulting to today's sequential behaviour. Same-DAG-level
+// phases may overlap within a case; cases may overlap within a session,
+// honouring Exclusive() and the case DAG. The report stays deterministic
+// whatever the interleaving.
 
 // rendezvousPhase blocks until its partner arrives — the test deadlocks in
 // ~2s (via the escape hatch) unless the two genuinely run concurrently.
@@ -59,7 +59,7 @@ func TestSameLevelPhasesOverlapWhenConfigured(t *testing.T) {
 }
 
 func TestPhaseConcurrencyRespectsTheDAG(t *testing.T) {
-	// b depends on a: they must NOT overlap even at concurrency 2, and b
+	// b depends on a: they must not overlap even at concurrency 2, and b
 	// must see a's handoff.
 	key := parallelKey
 	var got string

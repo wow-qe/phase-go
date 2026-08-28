@@ -10,9 +10,7 @@ import (
 )
 
 // EventRecorder is the in-memory sink for the unified event stream — the
-// observer analogue of SpyRecorder, shipped with the surface it tests
-// (the standing rule: every observable surface
-// ships its phasetest harness in the same commit).
+// observer analogue of SpyRecorder.
 type EventRecorder struct {
 	mu     sync.Mutex
 	events []phase.Event
@@ -39,7 +37,7 @@ func (r *EventRecorder) Events() []phase.Event {
 	return append([]phase.Event(nil), r.events...)
 }
 
-// Kinds returns just the kind sequence — the shape trace assertions pin.
+// Kinds returns just the kind sequence — the shape trace assertions check.
 func (r *EventRecorder) Kinds() []phase.EventKind {
 	r.mu.Lock()
 	defer r.mu.Unlock()

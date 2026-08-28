@@ -63,14 +63,11 @@ func NewCase(name string, items []ItemExpectation, state string, skips map[phase
 func (c *Case) ID() string { return c.Name }
 
 // Status parses c.State on every call rather than caching it at
-// construction. A naive version writes `return phase.ParseStatus(c.State)`
-// directly, which does not compile against the real signature —
-// phase.ParseStatus(string) returns (CaseStatus, error), never a bare
-// CaseStatus, because defaulting an unparseable status is exactly the
-// silent-typo hazard the library refuses everywhere else (case.go's own
-// doc comment). An unparseable State is a load-time bug in this example's
-// own case data, not a runtime condition to recover from, so it panics —
-// the same posture phase.Declare takes for a duplicate key.
+// construction. phase.ParseStatus(string) returns (CaseStatus, error), so
+// an unparseable status is never silently defaulted. An unparseable State
+// here is a load-time bug in this example's own case data, not a runtime
+// condition to recover from, so it panics — the same posture phase.Declare
+// takes for a duplicate key.
 func (c *Case) Status() phase.CaseStatus {
 	st, err := phase.ParseStatus(c.State)
 	if err != nil {

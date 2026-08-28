@@ -17,10 +17,9 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// The QE workflow IS pasting reports into tickets. Redaction has to
-// exist before any report leaves a laptop — and it has to actually reach
-// every evidence carrier: Observation values, Result Expected/Actual, and
-// raw error strings (DSNs and tokens ride adapter errors).
+// Redaction must reach every evidence carrier a report or event can
+// expose: Observation values, Result Expected/Actual, and raw error
+// strings (DSNs and tokens ride adapter errors).
 
 func secretSession(t *testing.T) *Session {
 	t.Helper()
@@ -72,9 +71,8 @@ func TestRedactMatchingScrubsErrorStringsAndReasons(t *testing.T) {
 }
 
 func TestConfigRedactKeysAppliesAtReportBuild(t *testing.T) {
-	// The ARCHITECTURE trust-boundary doc promised Config.RedactKeys before
-	// anything read it — the "documented, read by nothing, inert" shape.
-	// Now it is real: keys named in config are redacted in every Report().
+	// Config.RedactKeys must be read: keys named in config are redacted
+	// in every Report().
 	r := mustRunner(t, Config{Defaults: validTiming(), RedactKeys: []string{"authorization"}},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			run.Observe("request", map[string]any{"Authorization": "Bearer sk-live-999"})
@@ -107,9 +105,9 @@ func TestUnredactableValueIsReplacedWhole(t *testing.T) {
 }
 
 func TestRedactMatchingScrubsPhaseOutcomeReasons(t *testing.T) {
-	// land() copies the RAW adapter
-	// error into PhaseOutcome.Reason, and no redaction path visited it — the
-	// same DSN scrubbed in cr.Errors would otherwise survive, duplicated, in cr.Phases.
+	// land() copies the adapter error into PhaseOutcome.Reason, and that
+	// copy must also be scrubbed; otherwise the same DSN redacted in
+	// cr.Errors would survive, duplicated, in cr.Phases.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			return fmt.Errorf("postgres://qe:s3cr3t@db.internal:5432/x: connection refused")
@@ -157,8 +155,8 @@ func TestConfigRedactPatternsMakeTheAutomaticPathScrubStrings(t *testing.T) {
 }
 
 func TestInvalidRedactPatternIsRefusedAtConstruction(t *testing.T) {
-	// A pattern that never compiled is a redaction that never ran — the
-	// silent-config defect class; refuse it before anything executes.
+	// A pattern that never compiled is a redaction that never ran; refuse
+	// it before anything executes rather than silently skipping it.
 	_, err := NewRunner(NewPipeline(&stubPhase{id: "submit"}),
 		Config{Defaults: validTiming(), RedactPatterns: []string{"("}})
 	var le *LoadError
@@ -168,9 +166,9 @@ func TestInvalidRedactPatternIsRefusedAtConstruction(t *testing.T) {
 }
 
 func TestBareStringEvidenceValuesAreScrubbed(t *testing.T) {
-	// The bare-string carrier: a DSN in WithActual (a bare string, no
-	// map key to match) escaped RedactPatterns on BOTH surfaces. Pinned on
-	// both: the report artifact and the live stream.
+	// A DSN in WithActual (a bare string, with no map key to match) must
+	// be scrubbed by RedactPatterns on both the report artifact and the
+	// live event stream.
 	dsn := "postgres://qe:s3cr3t@db.internal/x"
 	r := mustRunner(t, Config{
 		Defaults:       validTiming(),
@@ -204,11 +202,10 @@ func TestBareStringEvidenceValuesAreScrubbed(t *testing.T) {
 }
 
 func TestEveryStringCarrierOnCaseReportIsScrubbed(t *testing.T) {
-	// Reason-shaped carriers were found one at a time. This
-	// test makes "is the surface exhausted" MECHANICAL: it walks CaseReport
-	// by reflection for every string-typed field, requires each to be in
-	// the covered set, and FAILS when a future field appears that
-	// redactCasePattern was never taught about.
+	// This test walks CaseReport by reflection for every string-typed
+	// field, requires each to be in the covered set below, and fails
+	// when a future field appears that redactCasePattern was never
+	// taught about.
 	covered := map[string]bool{
 		"CaseReport.CaseID":                     false, // identity, framework-controlled
 		"CaseReport.Correlation":                false, // framework-allocated
@@ -264,10 +261,9 @@ func TestEveryStringCarrierOnCaseReportIsScrubbed(t *testing.T) {
 				t.Errorf("NEW string carrier %s: teach redactCasePattern about it (or record why it cannot carry a secret) and add it here", path)
 			}
 		case reflect.Interface:
-			// Any-typed fields are exactly where
-			// consumer-supplied values live (two of the four found carriers).
-			// They cannot be walked statically, so each needs conscious
-			// sign-off here just like string fields.
+			// Any-typed fields are exactly where consumer-supplied values
+			// live. They cannot be walked statically, so each needs
+			// conscious sign-off here just like string fields.
 			seen[path] = true
 			if _, known := covered[path]; !known {
 				t.Errorf("NEW any-typed carrier %s: it holds consumer-supplied values - teach the redaction machinery about it and add it here", path)
@@ -299,10 +295,9 @@ func TestEveryStringCarrierOnCaseReportIsScrubbed(t *testing.T) {
 }
 
 func TestRedactMatchingReachesStructuredEvidence(t *testing.T) {
-	// Found by the flagship example (the canary doing its job): a secret
-	// riding INSIDE structured evidence — a slice element, a map key or
-	// value, an EntityRef — must not slip past RedactMatching via
-	// bare-string carriers. Free text is free text at any depth.
+	// A secret riding inside structured evidence — a slice element, a
+	// map key or value, an EntityRef — must not slip past RedactMatching
+	// via bare-string carriers. Free text is free text at any depth.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			run.Record(result.Compared("rows", []bool{true}).

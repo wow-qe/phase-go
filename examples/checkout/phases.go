@@ -27,9 +27,9 @@ func (p *submitPhase) AppliesTo(phase.Case, phase.Config) phase.Applicability {
 	return phase.Applies() // every case submits something
 }
 
-// Before probes preconditions against LIVE state (the one stage allowed
+// Before probes preconditions against live state (the one stage allowed
 // to): catalog seeded, processor healthy. Side-effect-free by contract.
-// The two-fact pattern: a violation records evidence AND returns the error.
+// The two-fact pattern: a violation records evidence and returns the error.
 func (p *submitPhase) Before(_ context.Context, r *phase.Run) error {
 	if !p.sys.CatalogSeeded() {
 		r.Record(result.Failed("catalog seeded before submit", "the fixture must run first").
@@ -108,7 +108,7 @@ func (p *settleWaitPhase) Produces() []phase.KeyID {
 	return phase.Keys(SettledEntities)
 }
 func (p *settleWaitPhase) Requires() []phase.KeyID {
-	// StreamCursor is produced by the GROUP's lifecycle setup.
+	// StreamCursor is produced by the group's lifecycle setup.
 	return phase.Keys(OrderID, StreamCursor)
 }
 func (p *settleWaitPhase) AppliesTo(c phase.Case, _ phase.Config) phase.Applicability {
@@ -167,8 +167,8 @@ func (p *settleChecksPhase) Run(ctx context.Context, r *phase.Run) error {
 	}) {
 		r.Record(res)
 	}
-	// The DECLARED-flaky read: first count can come back one short on
-	// flappy days; a pass on retry surfaces the case as Flaked, loudly.
+	// The declared-flaky read: first count can come back one short on
+	// flappy days; a pass on retry surfaces the case as Flaked.
 	res, err := phase.Tolerate(ctx, r, "ledger indexer lags one read behind settlement", 3,
 		func(context.Context) result.Result {
 			return cmp.ValueMatch("ledger count", len(entities), p.sys.LedgerCount(orderID))
@@ -196,7 +196,7 @@ func (p *ledgerPhase) Run(ctx context.Context, r *phase.Run) error {
 		return err
 	}
 	// PollCompare: fetch-until-equal under the phase's WaitUntil budget —
-	// budget exhaustion is a failing RESULT naming the last value seen.
+	// budget exhaustion is a failing result naming the last value seen.
 	res, err := cmp.PollCompare(ctx, r, "ledger row count", len(entities),
 		func(context.Context) (int, error) { return p.sys.LedgerCount(orderID), nil })
 	if err != nil {
@@ -209,8 +209,8 @@ func (p *ledgerPhase) Run(ctx context.Context, r *phase.Run) error {
 
 // --- refund_audit: the When-gated phase ----------------------------------
 
-// refundAudit runs ONLY when settlement recorded failures — a condition
-// over RECORDED evidence via PriorEvidence, never live state. On green
+// refundAudit runs only when settlement recorded failures — a condition
+// over recorded evidence via PriorEvidence, never live state. On green
 // paths it declines with a recorded reason (visible NotApplicable).
 type refundAuditPhase struct{ sys *checkoutSystem }
 

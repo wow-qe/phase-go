@@ -43,7 +43,7 @@ func (e *CycleError) Error() string {
 }
 
 // Sort returns the IDs in dependency order (dependencies before dependents).
-// The order is DETERMINISTIC: among nodes whose dependencies are equally
+// The order is deterministic: among nodes whose dependencies are equally
 // satisfied, IDs are emitted in lexical order. Two calls with the same input
 // yield the identical slice.
 //

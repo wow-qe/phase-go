@@ -11,11 +11,11 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Containment and refusal guarantees, pinned.
+// Containment and refusal guarantees.
 
 func TestObserverPanicIsContainedAndSurfaced(t *testing.T) {
 	// A panicking consumer callback is contained: the run completes, and
-	// the degradation is LOUD - on the session and in the report - never
+	// the degradation is loud - on the session and in the report - never
 	// silently detached.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	WithProgress(func(ProgressEvent) { panic("dashboard bug") })(r)

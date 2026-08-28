@@ -10,9 +10,9 @@ import (
 )
 
 // MergeReports combines shard reports into one: sharding across CI jobs
-// is the only wall-clock lever while execution is sequential, and the merged
-// report must be exactly as trustworthy as its inputs. So the merge REFUSES
-// anything that would make the combination lie:
+// scales beyond a single machine's wall clock, and the merged report must
+// be exactly as trustworthy as its inputs. The merge refuses anything that
+// would make the combined report misrepresent its inputs:
 //
 //   - zero inputs (a merge of nothing must not fabricate an empty green
 //     report);

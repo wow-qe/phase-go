@@ -84,7 +84,7 @@ func (p *discover) Run(ctx context.Context, r *phase.Run) error {
 		return err // fails loudly if submit never produced it
 	}
 
-	// Wait for a CONDITION, never a duration.
+	// Wait for a condition, never a duration.
 	rows, err := phase.WaitUntil(ctx, r, func(ctx context.Context) ([]Row, bool, error) {
 		rows, err := p.db.Rows(ctx, id)
 		return rows, len(rows) > 0, err
@@ -275,7 +275,7 @@ type ledgerReader interface {
 
 // newLedgerPhase builds the ledger phase via phase.Func rather than a named
 // type — the compact style, for the phase with the least
-// ceremony to spare. It asserts an invariant of the SYSTEM, not of the
+// ceremony to spare. It asserts an invariant of the system, not of the
 // case's declaration: every entity that actually settled succeeded has a
 // ledger row, and every one that actually failed does not. That is
 // deliberately independent of what the case predicted (settle_checks

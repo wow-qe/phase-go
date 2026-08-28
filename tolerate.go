@@ -22,7 +22,7 @@ type ToleratedAttempt struct {
 	Actual   any    `json:"actual,omitempty"`
 }
 
-// Tolerate evaluates a check that is DECLARED flaky, up to attempts times,
+// Tolerate evaluates a check that is declared flaky, up to attempts times,
 // and is the only producer of the Flaked status. It records
 // its own evidence — do not Record the returned result again. The error is
 // non-nil only for cancellation: propagate it (return it from the phase), as
@@ -40,7 +40,7 @@ type ToleratedAttempt struct {
 //   - every attempt recorded as evidence: each failed attempt becomes an
 //     Observation carrying a ToleratedAttempt (attempt number, reason,
 //     expected/actual). Failed attempts are observations rather than failing
-//     results because the case's verdict must come from the FINAL judgement
+//     results because the case's verdict must come from the final judgement
 //     — Verify's Flaked rule demands evidence of passing and zero failing
 //     comparisons;
 //   - "passed on attempt 3" is a different fact from "passed": a pass on
@@ -54,9 +54,9 @@ type ToleratedAttempt struct {
 // attempts Tolerate sleeps the current phase's resolved Interval via the
 // injected sleeper.
 //
-// Tolerance retries are the SECOND of the three distinct retry kinds
-// : WaitUntil polls "not yet", Tolerate re-judges a completed
-// failure it was told to expect, and transport retries belong to adapters.
+// Tolerance retries are the second of the three distinct retry kinds:
+// WaitUntil polls "not yet", Tolerate re-judges a completed failure it was
+// told to expect, and transport retries belong to adapters.
 func Tolerate(ctx context.Context, r *Run, reason string, attempts int, check func(context.Context) result.Result) (result.Result, error) {
 	phaseID, timing := r.currentTiming()
 	if reason == "" {
@@ -95,7 +95,7 @@ func Tolerate(ctx context.Context, r *Run, reason string, attempts int, check fu
 		if err := r.sleep(ctx, timing.Interval); err != nil {
 			// Interrupted, not exhausted: no fabricated final judgement. The
 			// trail above keeps what each attempt saw; this records that the
-			// adjudication was cut short, with the ACTUAL count; the returned
+			// adjudication was cut short, with the actual count; the returned
 			// error routes the case to Errored via the phase's return.
 			r.Observe(fmt.Sprintf("tolerance interrupted after attempt %d of %d: %s", attempt, attempts, last.Name()),
 				fmt.Sprintf("cancelled while waiting to retry (tolerant: %s): %v", reason, err))

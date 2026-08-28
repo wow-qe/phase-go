@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 // Package phase is a library for phase-wise end-to-end testing: it runs
-// CASES through an ordered pipeline of PHASES against a real (or faked)
+// cases through an ordered pipeline of phases against a real (or faked)
 // system, collects evidence, and derives verdicts from that evidence —
 // never from control flow.
 //

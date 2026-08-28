@@ -11,11 +11,12 @@ import (
 	"time"
 )
 
-// WaitUntil is the reason phases never sleep: a fixed sleep is simultaneously
-// too slow on a fast machine and too short on a loaded one. The budget is in
-// ATTEMPTS, per case (a shared wall-clock budget starves cases that
-// were merely scheduled late), and exhaustion is a failure whose reason names
-// the budget — never a timeout swallowed as "nothing found".
+// WaitUntil is the reason phases never sleep: a fixed sleep is
+// simultaneously too slow on a fast machine and too short on a loaded
+// one. The budget is in attempts, per case (a shared wall-clock budget
+// starves cases that were merely scheduled late), and exhaustion is a
+// failure whose reason names the budget — never a timeout swallowed as
+// "nothing found".
 
 func waitRun(t Timing) (*Run, *[]time.Duration) {
 	r := newTestRun()
@@ -41,7 +42,7 @@ func TestWaitReturnsWhenTheConditionHolds(t *testing.T) {
 	if calls != 3 {
 		t.Fatalf("condition evaluated %d times, want 3", calls)
 	}
-	// Sleeps BETWEEN attempts: two, not three. Sleeping after success wastes
+	// Sleeps between attempts: two, not three. Sleeping after success wastes
 	// interval × cases per run for nothing.
 	if len(*slept) != 2 || (*slept)[0] != 15*time.Second {
 		t.Fatalf("slept %v", *slept)
@@ -116,10 +117,10 @@ func TestUnvalidatedTimingIsAFrameworkError(t *testing.T) {
 }
 
 func TestTimeoutCutsOffASingleBlockingCondition(t *testing.T) {
-	// C2 rework: the first fix only checked the deadline BEFORE each attempt,
-	// so one cond call that blocked past Timeout was still unbounded. The
-	// condition's context must carry the deadline, and its expiry must read as
-	// the named budget — not as a bare context error.
+	// The condition's context must carry the deadline itself, not just be
+	// checked before each attempt, so a single cond call that blocks past
+	// Timeout is still bounded. Its expiry must read as the named budget
+	// — not as a bare context error.
 	r := newTestRun()
 	r.phase, r.timing = "settle", Timing{Attempts: 3, Interval: time.Hour, Timeout: 30 * time.Millisecond}
 	calls := 0
@@ -145,9 +146,8 @@ func TestTimeoutCutsOffASingleBlockingCondition(t *testing.T) {
 }
 
 func TestTimeoutBoundsAHangingCondition(t *testing.T) {
-	// Timing.Timeout was documented as the wall-clock backstop and read
-	// nowhere. A condition that ignores ctx and never returns done must be
-	// bounded by Timeout.
+	// Timing.Timeout is the wall-clock backstop: a condition that ignores
+	// ctx and never returns done must still be bounded by Timeout.
 	r := newTestRun()
 	r.phase, r.timing = "settle", Timing{Attempts: 1000000, Interval: time.Hour, Timeout: 50 * time.Millisecond}
 	var advanced time.Duration

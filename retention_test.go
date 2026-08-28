@@ -12,12 +12,11 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// All evidence was held in memory for the whole session, unbounded —
-// 1.8 GiB peak at 1k cases × 30 phases × 5 obs × 100 rows would be an OOM wall in a
-// 2Gi CI container. Two reliefs, both explicit: a per-case observation cap
-// whose truncation is LOUD (a silent cap is a default, and defaults are how
-// evidence disappears), and a case observer that streams each finished
-// CaseReport so a consumer can write-and-drop instead of retaining.
+// Evidence retention per case is bounded, not unbounded: a per-case
+// observation cap whose truncation is loud (a silent cap is a default,
+// and defaults are how evidence disappears), and a case observer that
+// streams each finished CaseReport so a consumer can write-and-drop
+// instead of retaining every case's evidence for the whole session.
 
 func observantPhase(id ID, n int) Interface {
 	return &recordingPhase{stubPhase: stubPhase{id: id}, do: func(_ context.Context, run *Run) error {
@@ -72,9 +71,9 @@ func TestCaseObserverStreamsEachFinishedCase(t *testing.T) {
 	}
 }
 
-// TransitiveDeps was a fresh DFS per phase per case, unconditionally —
-// O(cases × phases²) on chains. The reach sets are now computed once at
-// NewRunner; this pins that the memoized sets match the graph.
+// Reach sets are precomputed once at NewRunner rather than recomputed
+// per phase per case; this asserts that the memoized sets match the
+// graph.
 func TestReachSetsMatchTheGraph(t *testing.T) {
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&stubPhase{id: "a"},
@@ -101,9 +100,9 @@ func TestReachSetsMatchTheGraph(t *testing.T) {
 }
 
 func TestPruningReasonIsDeterministicWithManyErroredDeps(t *testing.T) {
-	// firstErroredDep iterates the errored set now; map order is
-	// random, so the pick must tie-break deterministically or the recorded
-	// pruning reason would differ run to run (invariant 6).
+	// firstErroredDep iterates the errored set; map iteration order is
+	// random, so the pick must tie-break deterministically or the
+	// recorded pruning reason would differ run to run.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&stubPhase{id: "a"}, &stubPhase{id: "b"},
 		&stubPhase{id: "c", deps: []ID{"a", "b"}},

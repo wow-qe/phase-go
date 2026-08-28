@@ -93,7 +93,7 @@ func TestAlwaysPassPreservesIdentityAndWiring(t *testing.T) {
 	if !reflect.DeepEqual(a.DependsOn(), inner.DependsOn()) {
 		t.Fatalf("DependsOn() = %v", a.DependsOn())
 	}
-	// Unlike Gutted, AlwaysPass RUNS the phase — its wiring must survive
+	// Unlike Gutted, AlwaysPass runs the phase — its wiring must survive
 	// intact, Produces included, or preflight would refuse the mutated
 	// pipeline that the un-mutated one accepts.
 	if !reflect.DeepEqual(a.Produces(), inner.Produces()) {
@@ -145,7 +145,7 @@ func alwaysPassSession(t *testing.T, wrap func(phase.Interface) phase.Interface)
 }
 
 func TestAlwaysPassFlipsTheWrappedPhasesFailure(t *testing.T) {
-	// The gate's meaning: if wrapping ONE phase in AlwaysPass flips a failing
+	// The gate's meaning: if wrapping one phase in AlwaysPass flips a failing
 	// case green, that case's verdict was riding on that phase's comparisons.
 	if cr := alwaysPassSession(t, nil); cr.Status != phase.Failed {
 		t.Fatalf("unwrapped: status = %s, want Failed", cr.Status)
@@ -166,7 +166,7 @@ func TestAlwaysPassFlipsTheWrappedPhasesFailure(t *testing.T) {
 
 func TestAlwaysPassDoesNotLeakToOtherPhases(t *testing.T) {
 	// Interception is bound to the wrapped phase's own recording handle: a
-	// DIFFERENT phase's failing result must still fail the case.
+	// different phase's failing result must still fail the case.
 	checksPasses := phase.Func{
 		PhaseID: "checks",
 		Do: func(ctx context.Context, r *phase.Run) error {
@@ -239,7 +239,7 @@ func TestGuttedNeutralisesHooks(t *testing.T) {
 }
 
 func TestAlwaysPassForwardsHooksWithInterception(t *testing.T) {
-	// AlwaysPass runs the phase FOR REAL — hooks included — and its flip
+	// AlwaysPass runs the phase for real — hooks included — and its flip
 	// must catch hook-recorded results too, or a Before-recorded failure
 	// escapes the mutation.
 	b, a := false, false

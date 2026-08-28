@@ -13,10 +13,9 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Composition sabotage: the seams between subsystems, where every real
-// defect of this program's history actually lived. Each test seeds one
-// misuse of a Run handle in a stage that forbids it, or one crossing of
-// two features nobody crossed before, and pins the documented answer.
+// Tests for the seams between subsystems: each one seeds a misuse of a
+// Run handle in a stage that forbids it, or a crossing of two features,
+// and checks the framework's documented response.
 
 // conditionalSabotage adds a When gate to a sabotagePhase — a separate
 // type, so plain sabotagePhases never accidentally become conditional.
@@ -72,7 +71,7 @@ func smallRunner(t *testing.T, p *phase.Pipeline, opts ...phase.RunnerOption) *p
 func TestWhenWritingIsAViolationInBothDirections(t *testing.T) {
 	// Both directions: a When that misuses the handle and then claims
 	// "run me", and one that claims "decline me". The violation must win
-	// over the condition's own answer BOTH times.
+	// over the condition's own answer both times.
 	for name, when := range map[string]func(context.Context, *phase.Run) (bool, string, error){
 		"records then approves": func(_ context.Context, r *phase.Run) (bool, string, error) {
 			r.Record(result.Compared("smuggled", []bool{true}))
@@ -101,8 +100,8 @@ func TestWhenWritingIsAViolationInBothDirections(t *testing.T) {
 // --- teardown stages may not Put -----------------------------------------
 
 func TestGroupTeardownPutFailsTheGroupRowItself(t *testing.T) {
-	// Proven from outside the engine: the lifecycle's own
-	// Teardown returns nil, but the smuggled Put must fail the GROUP ROW
+	// Checked from outside the engine: the lifecycle's own Teardown
+	// returns nil, but the smuggled Put must fail the group's row
 	// independently — never a Passed group row beside a quiet violation.
 	g := phase.Group{ID: "g", Members: []phase.ID{"m"}, Lifecycle: &wonkyLifecycle{
 		teardown: func(_ context.Context, r *phase.Run) error {
@@ -189,10 +188,10 @@ func TestSecondPutOfOneKeyIsAViolation(t *testing.T) {
 // --- the Before two-fact split, sabotaged --------------------------------
 
 func TestBeforeRecordingOnlyPassingEvidenceStillErrors(t *testing.T) {
-	// A hook that records something irrelevant (passing) and THEN hits real
-	// trouble: the passing record must not satisfy the two-fact probe — the
-	// error still lands on the environment channel, and the recorded
-	// evidence survives.
+	// A hook that records something irrelevant (passing) and then hits
+	// real trouble: the passing record must not satisfy the two-fact
+	// probe — the error still lands on the environment channel, and the
+	// recorded evidence survives.
 	hooked := &beforeSabotage{sabotagePhase: sabotagePhase{id: "hooked"},
 		before: func(_ context.Context, r *phase.Run) error {
 			r.Record(result.Compared("irrelevant probe", []bool{true}))
@@ -259,13 +258,13 @@ func TestCancellationMidSettleIsErroredNeverFailed(t *testing.T) {
 	}
 }
 
-// --- SF probe: a teardown ERROR against an otherwise green case ----------
+// --- a teardown error against an otherwise green case ---------------------
 
 func TestGroupTeardownErrorCannotCoexistWithPassed(t *testing.T) {
-	// The contradiction this test rules out: every member
-	// passes, the lifecycle's Teardown returns an error. A report reading
-	// "case Passed" beside "group Errored" would be internally
-	// contradictory — the teardown failure must reach the verdict.
+	// Every member passes, but the lifecycle's Teardown returns an error.
+	// A report reading "case Passed" beside "group Errored" would be
+	// internally contradictory — the teardown failure must reach the
+	// verdict.
 	g := phase.Group{ID: "g", Members: []phase.ID{"m"}, Lifecycle: &wonkyLifecycle{
 		teardown: func(context.Context, *phase.Run) error {
 			return context.DeadlineExceeded
@@ -282,18 +281,17 @@ func TestGroupTeardownErrorCannotCoexistWithPassed(t *testing.T) {
 	}
 }
 
-// --- SF boundary demo: a cond that lies about its own deadline -----------
+// --- a condition function that ignores its own deadline --------------------
 
 func TestCondSwallowingItsDeadlineIsBeyondTheFramework(t *testing.T) {
-	// wait.go documents its one honest limit: Go cannot preempt a
-	// goroutine, so a cond that ignores/swallows its context is beyond any
-	// framework's reach. This test EXISTS to pin that boundary as real —
-	// the lie is accepted — so nobody mistakes the documented limit for a
-	// checkable guarantee.
+	// wait.go documents one limit: Go cannot preempt a goroutine, so a
+	// condition function that ignores or swallows its context is beyond
+	// any framework's reach. This test asserts that such a condition's
+	// stale result is accepted rather than caught.
 	liar := &sabotagePhase{id: "liar", run: func(ctx context.Context, r *phase.Run) error {
 		v, err := phase.WaitUntil(ctx, r, func(condCtx context.Context) (string, bool, error) {
-			<-condCtx.Done()                       // sees the deadline...
-			return "stale-cached-value", true, nil // ...and lies anyway
+			<-condCtx.Done()                       // waits past the deadline...
+			return "stale-cached-value", true, nil // ...then reports success anyway
 		})
 		if err != nil {
 			return err
@@ -313,6 +311,6 @@ func TestCondSwallowingItsDeadlineIsBeyondTheFramework(t *testing.T) {
 	}
 	cr := rowOf(t, s.Report(), "one")
 	if cr.Status != phase.Passed {
-		t.Fatalf("case = %v — the framework cannot catch a cond that swallows its context; if this ever starts failing, the boundary moved and wait.go's docs must move with it", cr.Status)
+		t.Fatalf("case = %v — the framework cannot catch a cond that swallows its context", cr.Status)
 	}
 }

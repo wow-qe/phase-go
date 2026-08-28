@@ -5,11 +5,11 @@ package phase
 
 import "fmt"
 
-// The typed lifecycle machine — per-entity scoped by the
-// engine lens's ruling: a checked machine ONLY where a real bug class
-// exists. groupRun is that entity (a TOCTOU-prone spot); runCore's
-// sealed stays the named one-way-gate idiom; linear single-goroutine flows
-// stay linear. Transition tables are DATA: the docs render from them.
+// The typed lifecycle machine — used only where a real bug class exists,
+// per entity, not everywhere. groupRun is that entity (a TOCTOU-prone
+// spot); runCore's sealed stays the named one-way-gate idiom; linear
+// single-goroutine flows stay linear. Transition tables are data: the docs
+// render from them.
 
 type machine[S comparable] struct {
 	cur   S
@@ -21,7 +21,7 @@ func newMachine[S comparable](start S, legal map[S][]S) *machine[S] {
 }
 
 // to transitions or refuses: an illegal transition is a bug in phase, not
-// a condition to handle — the founding move, applied to control flow.
+// a condition to handle — the zero-comparisons discipline, applied to control flow.
 func (m *machine[S]) to(next S) error {
 	for _, ok := range m.legal[m.cur] {
 		if ok == next {
@@ -35,7 +35,7 @@ func (m *machine[S]) to(next S) error {
 
 func (m *machine[S]) state() S { return m.cur }
 
-// groupState is the group lifecycle, reified (was: two booleans).
+// groupState is the group lifecycle, reified as an explicit state.
 type groupState uint8
 
 const (
@@ -65,7 +65,7 @@ func (s groupState) String() string {
 	return "unknown"
 }
 
-// groupTransitions is the rendered table. Teardown runs from BOTH
+// groupTransitions is the rendered table. Teardown runs from both
 // active and setup-failed (setup was attempted: resources may be held).
 var groupTransitions = map[groupState][]groupState{
 	groupPending:     {groupSettingUp},

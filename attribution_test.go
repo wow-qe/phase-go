@@ -12,19 +12,19 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Evidence must never be stamped by reading a mutable "current phase"
-// field at record time. The mutex made that race-clean and still WRONG: any
-// recording that outlives its phase — a goroutine, a stashed *Run, a future
-// parallel scheduler — was attributed to whichever phase happened to be
-// current. These tests pin attribution BY CONSTRUCTION: each phase records
-// through its own bound view, so where the evidence came from is a property
-// of the handle, not of the clock.
+// Evidence is attributed to the phase whose Run handle recorded it, not to
+// whichever phase happens to be "current" at record time. Each phase records
+// through its own bound view, so a goroutine, a stashed *Run, or a future
+// parallel scheduler cannot misattribute evidence by outliving its phase:
+// where the evidence came from is a property of the handle, not the clock.
+// Recording through a handle after its case has produced a verdict panics
+// instead of silently dropping the evidence.
 
 func TestEvidenceIsAttributedToTheRecordingPhaseNotTheCurrentOne(t *testing.T) {
 	var fromA *Run
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "a"}, do: func(_ context.Context, run *Run) error {
-			fromA = run // outlives the phase — the C4 shape
+			fromA = run // outlives the phase; recording still binds to it
 			run.Record(result.Compared("a's own check", []bool{true}))
 			return nil
 		}},
@@ -54,10 +54,10 @@ func TestEvidenceIsAttributedToTheRecordingPhaseNotTheCurrentOne(t *testing.T) {
 }
 
 func TestRecordingAfterTheCaseCompletesPanicsLoudly(t *testing.T) {
-	// C4's other half: evidence recorded after the case's verdict was derived
-	// must not vanish into a buffer nobody would ever read — a silent drop.
-	// Mirroring testing.T's choice for Log-after-test: a loud panic beats a
-	// silently incomplete report.
+	// Evidence recorded after a case's verdict has been derived must not
+	// vanish into a buffer nobody would ever read. Mirroring testing.T's
+	// choice for Log-after-test, a loud panic beats a silently incomplete
+	// report.
 	var escaped *Run
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "a"}, do: func(_ context.Context, run *Run) error {

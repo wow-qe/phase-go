@@ -13,11 +13,11 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Cases gain a DAG. Execution follows dependency
-// order (a dependency on a later-declared case is normal, exactly as phases
-// already decouple execution from declaration); the REPORT stays in
-// declaration order. An unmet requirement is a loud Skipped with the cause
-// carried structurally, never an omitted case.
+// Cases gain a DAG. Execution follows dependency order (a dependency on
+// a later-declared case is normal, exactly as phases already decouple
+// execution from declaration); the report stays in declaration order.
+// An unmet requirement is a loud Skipped with the cause carried
+// structurally, never an omitted case.
 
 type depCase struct {
 	stubCase
@@ -122,8 +122,8 @@ func TestCaseDependencyRefusals(t *testing.T) {
 }
 
 func TestDependencySkipCascades(t *testing.T) {
-	// x depends on y (Passed required); y is skipped because ITS dependency
-	// failed. x's requirement reads y's ACTUAL status (Skipped) — whatever
+	// x depends on y (Passed required); y is skipped because its dependency
+	// failed. x's requirement reads y's actual status (Skipped) — whatever
 	// the dependency reached, generically.
 	r := depRunner(t, map[string]bool{"root": false})
 	s := startSession(t, r,

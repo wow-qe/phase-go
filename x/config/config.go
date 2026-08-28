@@ -48,7 +48,7 @@ func Parse(data []byte) (phase.Config, error) {
 	}
 	// Duplicate keys anywhere in the document are refused before anything is
 	// decoded. yaml.v3 is last-wins by default, which means an operator can
-	// edit the WRONG duplicate and nothing says so — the same silent-config
+	// edit the wrong duplicate and nothing says so — the same silent-config
 	// class as an unknown key, so it gets the same answer. One recursive
 	// check at the root covers every present and future section.
 	if err := refuseDuplicateKeys(doc, ""); err != nil {

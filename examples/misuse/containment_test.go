@@ -13,8 +13,8 @@ import (
 )
 
 // Panic containment, site by site: a consumer bug is that case's evidence,
-// never the batch's crash. Every test runs a BYSTANDER case beside the
-// sabotaged one and demands the bystander's verdict untouched.
+// never the batch's crash. Every test runs a bystander case beside the
+// faulted one and checks that the bystander's verdict is untouched.
 
 type afterSabotage struct {
 	sabotagePhase
@@ -99,7 +99,7 @@ func TestPanicInAfterFlipsOnlyPassedRows(t *testing.T) {
 }
 
 func TestPanicInAfterNeverMasksTheRunsOwnError(t *testing.T) {
-	// An already-Errored row keeps its ORIGINAL cause; After's panic joins
+	// An already-Errored row keeps its original cause; After's panic joins
 	// the error ledger without rewriting history.
 	ph := &afterSabotage{sabotagePhase: sabotagePhase{id: "p",
 		run: func(_ context.Context, r *phase.Run) error {
@@ -181,17 +181,15 @@ func TestPanicInGroupSetupPrunesMembersLoudly(t *testing.T) {
 	assertBystanderPassed(t, rep)
 }
 
-// --- the error-family taxonomy under a contained violation ---------------
+// --- a contained violation under the error-family taxonomy -----------------
 
 func TestContainedViolationKeepsTheReportTrustworthy(t *testing.T) {
-	// The taxonomy question this test settles: whether a capability violation
-	// (recorded as a FrameworkError string in cr.Errors) should force exit
-	// 3. The ruling this test pins: NO — exit 3 means "these numbers cannot
-	// be trusted" (Verify failed). A CONTAINED consumer misuse is case
-	// evidence in a fully consistent report: the case is Errored, the
-	// violation is on the record, Verify passes, and the run exits 1. If
-	// this test ever fails, that boundary moved — update the taxonomy docs
-	// with it.
+	// A capability violation (recorded as a FrameworkError string in
+	// cr.Errors) does not force exit code 3: exit 3 means the report's
+	// numbers cannot be trusted (Verify failed). A contained consumer
+	// misuse is case evidence in a fully consistent report instead: the
+	// case is Errored, the violation is on the record, Verify passes, and
+	// the run exits 1.
 	smuggler := &sabotagePhase{id: "smuggler", run: func(_ context.Context, r *phase.Run) error {
 		phase.Put(r, StreamCursor, "undeclared")
 		r.Record(result.Compared("work", []bool{true}))

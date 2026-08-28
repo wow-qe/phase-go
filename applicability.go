@@ -6,11 +6,11 @@ package phase
 // Applicability is a phase's answer to "does this phase apply to this case".
 //
 // It may be computed from the case declaration and from configuration. It may
-// NOT be computed from live system state: "the request already reached a
-// terminal state, so skip the progress assertion" is the framework choosing
-// what to test based on what the system did — the defect, not the feature.
-// The contract cannot make that unrepresentable, so it is stated here, tested
-// in phasetest.ConformanceCase, and enforced in review.
+// not be computed from live system state: deciding what to test based on
+// what the system already did — e.g. "the request already reached a
+// terminal state, so skip the progress assertion" — biases the check toward
+// passing. The type system cannot make that unrepresentable, so the
+// restriction is stated here as a contract.
 type Applicability struct {
 	Applies bool
 	Reason  string // required when !Applies; recorded in the report

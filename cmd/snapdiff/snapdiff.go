@@ -408,7 +408,7 @@ func summarizeDiff(diffs [][]byte, entryCount int) string {
 // refuseDuplicateJSONKeys walks the token stream and errors on any object with
 // a repeated key, at every nesting level. It uses an explicit frame stack: an
 // object frame alternates key/value, an array frame does not, so a string
-// VALUE equal to a key name is never mistaken for a duplicate key.
+// value equal to a key name is never mistaken for a duplicate key.
 func refuseDuplicateJSONKeys(dec *json.Decoder) error {
 	type frame struct {
 		isObject bool
@@ -424,7 +424,7 @@ func refuseDuplicateJSONKeys(dec *json.Decoder) error {
 		if err != nil {
 			return fmt.Errorf("invalid report JSON: %w", err)
 		}
-		// A string that is a key must be checked BEFORE the frame's wantKey
+		// A string that is a key must be checked before the frame's wantKey
 		// flips; a value or non-string just advances the toggle.
 		if s, ok := tok.(string); ok && len(stack) > 0 {
 			top := stack[len(stack)-1]

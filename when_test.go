@@ -12,12 +12,11 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// When is a guard over evidence ALREADY RECORDED
-// in this case — never live state — evaluated at the phase's turn, after
-// pruning and group setup, before timing/hooks. Declining is a recorded
-// NotApplicable; a condition that itself breaks is Errored, never a
-// decline (an error is not a decline, as an error is not a failed
-// comparison).
+// When is a guard over evidence already recorded in this case — never
+// live state — evaluated at the phase's turn, after pruning and group
+// setup, before timing/hooks. Declining is a recorded NotApplicable; a
+// condition that itself breaks is Errored, never a decline (an error is
+// not a decline, as an error is not a failed comparison).
 
 type conditionalPhase struct {
 	stubPhase
@@ -142,9 +141,9 @@ func TestPriorEvidenceIsRestrictedToTransitiveDeps(t *testing.T) {
 }
 
 func TestPriorEvidenceIsALiveScanNotAStatusCache(t *testing.T) {
-	// The engine lens's trap: a phase that runs clean but records a failing
-	// result lands PhaseOutcome{Passed}. A cached status would tell When "y
-	// passed"; the live scan tells the truth.
+	// A phase that runs clean but records a failing result lands
+	// PhaseOutcome{Passed}. A cached status would tell When "y passed";
+	// the live scan over recorded evidence tells the truth.
 	var ev PriorEvidenceSummary
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "y"}, do: func(_ context.Context, run *Run) error {
@@ -165,10 +164,10 @@ func TestPriorEvidenceIsALiveScanNotAStatusCache(t *testing.T) {
 }
 
 func TestWhenThatRecordsWhileDecliningIsErroredNotSilent(t *testing.T) {
-	// A When that Records before
-	// declining produced a NotApplicable row carrying phantom evidence,
-	// invisible to Verify. A condition reads the record; it does not write
-	// it — folding to Errored keeps the row and the evidence consistent.
+	// A When that calls Record before declining must not produce a
+	// NotApplicable row carrying evidence invisible to Verify: a
+	// condition reads recorded evidence, it does not write it — folding
+	// to Errored keeps the row and the evidence consistent.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&conditionalPhase{stubPhase: stubPhase{id: "leaky"},
 			when: func(_ context.Context, run *Run) (bool, string, error) {
@@ -180,7 +179,7 @@ func TestWhenThatRecordsWhileDecliningIsErroredNotSilent(t *testing.T) {
 	s := startSession(t, r, &stubCase{id: "one"})
 	po := phaseOutcome(t, caseReport(t, s, "one"), "leaky")
 	if po.Status != NotApplicable {
-		// good — must NOT be NotApplicable
+		// good — must not be NotApplicable
 	} else {
 		t.Fatalf("outcome = %+v — phantom evidence under a did-not-run row", po)
 	}

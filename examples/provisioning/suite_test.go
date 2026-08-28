@@ -15,12 +15,10 @@ import (
 	"github.com/wow-qe/phase-go/phasetest"
 )
 
-// This file is the example's demonstration: a green suite, a red run that
-// stays honest about it, a deliberately disabled phase staying visible as
-// such, the mutation gate that proves the green run meant something, and
-// determinism across two otherwise-identical runs. Read it in that order —
-// it is the five-minute declaration -> red -> green walkthrough the root
-// README promises (see this package's own README.md).
+// This file demonstrates: a green suite, a red run that stays honest about
+// it, a deliberately disabled phase staying visible as such, a mutation
+// gate that checks the green run's assertions actually run, and
+// determinism across two otherwise-identical runs.
 
 func defaultConfig() phase.Config {
 	return phase.Config{Defaults: phase.Timing{Attempts: 3, Interval: time.Millisecond, Timeout: time.Second}}
@@ -47,7 +45,7 @@ func TestGreenRun(t *testing.T) {
 		[]ItemExpectation{{EntityID: "e1", State: "succeeded"}},
 		"active", nil, "", nil)
 
-	// Two entities, one of each terminal outcome — and the case DECLARES
+	// Two entities, one of each terminal outcome — and the case declares
 	// entity two's failure, so the case still passes: a per-entity
 	// failure the case predicted is not a case failure.
 	mixed := NewCase("mixed-entities-one-fails-as-expected",
@@ -58,7 +56,7 @@ func TestGreenRun(t *testing.T) {
 		"active", nil, "m2", sys.Provider)
 
 	// A negative case: modeled as a request that never reaches the
-	// provider or the ledger, so it skips both phases WITH reasons rather
+	// provider or the ledger, so it skips both phases with reasons rather
 	// than letting them run against data that was never going to be
 	// meaningful.
 	negative := NewCase("negative-skips-provider-and-ledger",
@@ -104,7 +102,7 @@ func TestRedRunIsHonest(t *testing.T) {
 	sys := NewSystem()
 	r := newRunner(t, Pipeline(sys), defaultConfig())
 
-	// The case DECLARES success. The fixture injects a fault that makes
+	// The case declares success. The fixture injects a fault that makes
 	// the fake provider actually reject this entity — so the declaration
 	// and reality disagree, and the case must say so.
 	red := NewCase("declares-success-but-provider-rejects",
@@ -199,11 +197,11 @@ func TestDisabledPhaseIsVisible(t *testing.T) {
 
 // --- TestMutationGateGoesRed -----------------------------------------------
 
-// TestMutationGateGoesRed is the DoD's mutation gate: it proves the suite's
-// green is not decorative by removing the one phase that would have caught
-// this case's defect and checking that the case stops reporting Failed.
+// TestMutationGateGoesRed checks that the suite's green result depends on
+// a real assertion: it removes the one phase that would have caught this
+// case's defect and confirms the case stops reporting Failed.
 func TestMutationGateGoesRed(t *testing.T) {
-	// A case whose declared expectation is simply WRONG: the entity is
+	// A case whose declared expectation is simply wrong: the entity is
 	// never faulted, so it actually succeeds, but the case declares it
 	// should fail. Only settle_checks compares declared-vs-actual state;
 	// provider_side and ledger both assert what actually happened, so
@@ -214,8 +212,8 @@ func TestMutationGateGoesRed(t *testing.T) {
 			"active", nil, "", nil)
 	}
 
-	// Baseline: settle_checks present and doing its job. The suite must be
-	// red, or this test proves nothing.
+	// Baseline: settle_checks present and doing its job. The suite must
+	// be red here, or the mutation below has nothing to compare against.
 	baselineSys := NewSystem()
 	baselineRunner := newRunner(t, Pipeline(baselineSys), defaultConfig())
 	baselineSession, err := baselineRunner.Start(context.Background(), []phase.Case{buildCase()})
@@ -321,11 +319,10 @@ func normalizeReport(t *testing.T, raw []byte) []byte {
 			if obs, ok := cm["observations"].([]any); ok {
 				for _, o := range obs {
 					if om, ok := o.(map[string]any); ok {
-						// Schema key is "at" since the report fixed its JSON
-						// surface; setting the old "At" here both missed the
-						// real timestamp AND injected a phantom key - which
-						// is exactly how the casing break was proven
-						// had shipped invisibly.
+						// The observation's timestamp field is "at" in the
+						// report's JSON schema; using a different key here
+						// would both miss the real timestamp and leave a
+						// stray key in the normalized output.
 						om["at"] = ""
 					}
 				}

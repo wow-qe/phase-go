@@ -17,7 +17,7 @@ import (
 const SchemaVersion = "1"
 
 // Report is the product of a session. It states what was decided, the
-// evidence for each decision, and — as a first-class section — what was NOT
+// evidence for each decision, and — as a first-class section — what was not
 // verified: a report that silently implies total coverage is the failure this
 // library is a reaction to.
 type Report struct {
@@ -89,7 +89,7 @@ func (s *Session) Report() *Report {
 			}
 		}
 	}
-	// What this run did NOT verify, said once and loudly rather than left to
+	// What this run did not verify, said once and loudly rather than left to
 	// be summed out of per-case rows.
 	for _, id := range disabledOrder {
 		rep.NotVerified = append(rep.NotVerified,
@@ -102,7 +102,7 @@ func (s *Session) Report() *Report {
 		rep.Diagnostics = append(rep.Diagnostics,
 			fmt.Sprintf("an observer callback panicked and was contained; live observability was degraded: %v", err))
 	}
-	// The configured redaction floor applies to EVERY report this session
+	// The configured redaction floor applies to every report this session
 	// builds — a report is safe to paste by default, not by remembering.
 	rep.Redact(s.redactKeys...)
 	for _, re := range s.redactPatterns {
@@ -111,7 +111,7 @@ func (s *Session) Report() *Report {
 	return rep
 }
 
-// ExitCode is THE mapping from a report to a process result — one
+// ExitCode is the mapping from a report to a process result — one
 // implementation for every entry point, because a suite that cannot fail a CI
 // job is decorative:
 //
@@ -135,8 +135,8 @@ func (r *Report) ExitCode() int {
 }
 
 // Verify asserts the report's internal consistency. It is an assertion, not a
-// repair: deriving outcomes from evidence (runner.finish) removes the CAUSE
-// of an inconsistent report, and Verify removes the DOUBT. If it returns an
+// repair: deriving outcomes from evidence (runner.finish) removes the cause
+// of an inconsistent report, and Verify removes the doubt. If it returns an
 // error, phase has a bug — file it against phase, not against the suite.
 func (r *Report) Verify() error {
 	if r.Schema != SchemaVersion {
@@ -159,7 +159,7 @@ func (r *Report) Verify() error {
 				return &FrameworkError{Invariant: "no pass over zero comparisons",
 					Detail: fmt.Sprintf("case %q, result %q", cr.CaseID, ar.Result.Name)}
 			}
-			// A FAILING result must explain itself — a reason, or
+			// A failing result must explain itself — a reason, or
 			// expected/actual — or it tells a debugger nothing and is
 			// indistinguishable from a real one. Reason counts as evidence
 			// because the sanctioned constructors put the explanation there
@@ -209,9 +209,9 @@ func (r *Report) Verify() error {
 			}
 		case Flaked:
 			recount.Flaked++
-			// Flaked means PASSED ON A TOLERATED RETRY - which requires
+			// Flaked means passed on a tolerated retry, which requires
 			// evidence of passing and no failed comparisons. A Flaked case
-			// with no results is a status nobody earned (review-gate probe).
+			// with no results is a status nobody earned.
 			if results == 0 || failing > 0 {
 				return &FrameworkError{Invariant: "flaked means passed on retry",
 					Detail: fmt.Sprintf("case %q is Flaked with %d result(s), %d failing", cr.CaseID, results, failing)}
@@ -232,9 +232,9 @@ func (r *Report) Verify() error {
 				return &FrameworkError{Invariant: "failing within recorded",
 					Detail: fmt.Sprintf("case %q, phase %q: failing_recorded %d outside [0,%d]", cr.CaseID, po.ID, po.Failing, po.Results)}
 			}
-			// A row that says "did not run" cannot carry
-			// recorded results - phantom evidence under a skip is the
-			// founding defect's inverse (asserting while claiming not to).
+			// A row that says "did not run" cannot carry recorded results:
+			// evidence under a claimed skip is asserting while claiming not
+			// to, the inverse of a pass over zero comparisons.
 			if (po.Status == NotApplicable || po.Status == Disabled) && po.Results > 0 {
 				return &FrameworkError{Invariant: "skips carry no results",
 					Detail: fmt.Sprintf("case %q, phase %q: %s with %d recorded result(s)", cr.CaseID, po.ID, po.Status, po.Results)}
@@ -261,8 +261,9 @@ func (r *Report) Verify() error {
 					Detail: fmt.Sprintf("case %q, group %q: %s with no reason", cr.CaseID, g.GroupID, g.Status)}
 			}
 		}
-		// The typed source is authoritative - the string surgery over the
-		// legacy "group:<id>:..." convention is gone.
+		// The typed source is authoritative for group attribution — it is
+		// never inferred by parsing the legacy "group:<id>:..." phase
+		// string.
 		checkGroupEvidence := func(src EvidenceSource) error {
 			if src.Kind != SourceGroupSetup && src.Kind != SourceGroupTeardown {
 				return nil
@@ -285,20 +286,20 @@ func (r *Report) Verify() error {
 		}
 	}
 
-	// NotVerified must name every operator-disabled phase. Without this
-	// mandatory cross-check must not be silently deletable
-	// (review-gate probe): per-case rows said Disabled while the top-level
-	// claim of coverage loss had been truncated away.
+	// NotVerified must name every operator-disabled phase: without this
+	// cross-check, per-case rows could say Disabled while the top-level
+	// claim of coverage loss was truncated away, and the two would
+	// silently disagree.
 	for i := range r.Cases {
 		for _, po := range r.Cases[i].Phases {
 			if po.Status != Disabled {
 				continue
 			}
 			named := false
-			// Match the QUOTED id: the emitted line writes %q, so the closing
-			// quote anchors the match and "settle_wait" cannot satisfy a line
-			// about "settle_wait_extended" — a bare
-			// substring version accepted exactly that.
+			// Match the quoted id: the emitted line writes %q, so the
+			// closing quote anchors the match — "settle_wait" must not
+			// satisfy a line about "settle_wait_extended". A bare substring
+			// match would.
 			quoted := fmt.Sprintf("%q", string(po.ID))
 			for _, line := range r.NotVerified {
 				if strings.Contains(line, quoted) {
@@ -331,7 +332,7 @@ func (r *Report) Verify() error {
 }
 
 // WriteJSON emits the report. Deterministic for a given report: field order
-// is fixed by the struct definitions, cases stay in execution order, and no
+// is fixed by the struct definitions, cases retain declaration order, and no
 // maps reach the marshaller.
 func (r *Report) WriteJSON(w io.Writer) error {
 	enc := json.NewEncoder(w)
@@ -343,10 +344,9 @@ func (r *Report) WriteJSON(w io.Writer) error {
 }
 
 // Status marshals as its string form — the one schema-surface spelling a
-// tag cannot express. Every other schema struct carries its json tags on the
-// REAL struct (session.go), compiler-linked and guarded by
-// TestSchemaSurfaceIsFullyTagged (the five hand-maintained shadow
-// structs this replaced dropped Results and Curtailed silently,
-// and allocated 11x the emitted bytes).
+// tag cannot express. Every other schema struct carries its json tags on
+// the real struct (session.go), compiler-linked and guarded by
+// TestSchemaSurfaceIsFullyTagged, which refuses any field added without a
+// tag.
 
 func (s Status) MarshalJSON() ([]byte, error) { return json.Marshal(s.String()) }

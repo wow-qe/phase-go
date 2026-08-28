@@ -62,9 +62,8 @@ func (e *LoadError) Error() string {
 	return fmt.Sprintf("load: %s: %s: %s", e.Code, e.Subject, e.Detail)
 }
 
-// FrameworkError means phase itself broke one of its invariants. The report
-// cannot be trusted past this point. Maps to exit code 3. If one of these
-// fires, the bug is in this module — file it here, not against the suite.
+// FrameworkError means phase itself broke one of its invariants: the report
+// cannot be trusted past this point. Maps to exit code 3.
 type FrameworkError struct {
 	Invariant string
 	Detail    string

@@ -26,7 +26,7 @@ func TestEntityRefIsResultsType(t *testing.T) {
 	// The alias matters: a comparator importing only package result and a
 	// phase importing the root must be talking about the same type, or every
 	// consumer writes conversions at the boundary.
-	// The compile-time fact under test: Ref returns result's OWN type —
+	// The compile-time fact under test: Ref returns result's own type —
 	// the func literal's return only compiles while that stays true.
 	var _ = func() result.EntityRef { return phase.Ref("x") }
 	fromResult := phase.Ref("x")
@@ -69,10 +69,9 @@ func TestParseStatusRefusesUnknownSpellings(t *testing.T) {
 	if _, err := phase.ParseStatus("confirmed"); err == nil {
 		t.Fatal("the retired spelling must not parse")
 	}
-	// Review finding: the refusal must be a typed *LoadError carrying
-	// StatusUnparsable, or the error-taxonomy's "Load family -> exit 2"
-	// promise is unreachable for this code - it was declared and never
-	// constructed anywhere.
+	// The refusal must be a typed *LoadError carrying StatusUnparsable,
+	// so the error-taxonomy's "Load family -> exit 2" contract is
+	// actually reachable for this code path.
 	var le *phase.LoadError
 	if _, err := phase.ParseStatus("confirmed"); !errors.As(err, &le) || le.Code != phase.StatusUnparsable {
 		t.Fatalf("ParseStatus must return *LoadError{StatusUnparsable}, got %v", err)

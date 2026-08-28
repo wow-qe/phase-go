@@ -10,7 +10,7 @@ import (
 	"unicode"
 )
 
-// Suites: a suite is a NAMED SELECTION, and selection
+// Suites: a suite is a named selection, and selection
 // is a tag expression — never an engine type. One case belongs to many
 // suites by carrying many tags; the Runner, Config, Preflight and the
 // report know nothing about any of it. The report describes execution;
@@ -23,15 +23,16 @@ type Tagged interface {
 }
 
 // ErrNoMatch: a selector matching zero cases is a refusal — running nothing
-// and reporting green is the founding defect wearing a suite's clothes.
+// and reporting a clean pass is the same defect the empty-comparison-set
+// rule already refuses at the result level, one layer up.
 // Typed, so CI wrappers branch on errors.Is, never on message strings.
 var ErrNoMatch = errors.New("phase: selector matched no cases")
 
 // SelectByTags filters cases by a boolean tag expression — `&&`, `||`, `!`
 // and parentheses over exact tag names (no hierarchy, no wildcards, no
-// regex: undemonstrated power is unpaid debt). Declaration order is
-// preserved. A malformed expression is an error naming the position; a
-// well-formed expression matching nothing returns ErrNoMatch.
+// regex — the expression language is kept deliberately small). Declaration
+// order is preserved. A malformed expression is an error naming the
+// position; a well-formed expression matching nothing returns ErrNoMatch.
 //
 //	smoke, err := phase.SelectByTags(cases, "smoke && !slow")
 //

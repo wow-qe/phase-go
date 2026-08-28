@@ -9,12 +9,13 @@ import (
 	"strings"
 )
 
-// The QE workflow includes pasting reports into tickets, and evidence rides
-// three carriers a paste exposes: Observation values, Result
-// Expected/Actual, and raw adapter error strings (DSNs, tokens).
-// Redaction is therefore in-place, total across those carriers, and VISIBLE:
-// a redacted value reads "[REDACTED]", never silently vanishes, so the
-// reader knows evidence was withheld rather than absent.
+// Reports are commonly pasted into tickets and logs, so evidence must stay
+// safe wherever it can leak: Observation values, Result Expected/Actual,
+// and raw adapter error strings (DSNs, tokens) are the three carriers a
+// paste exposes. Redaction is therefore in-place, total across those
+// carriers, and visible: a redacted value reads "[REDACTED]", never
+// silently vanishes, so the reader knows evidence was withheld rather than
+// absent.
 
 const redacted = "[REDACTED]"
 
@@ -94,11 +95,10 @@ func redactCasePattern(cr *CaseReport, re *regexp.Regexp) {
 			// own identifiers (possibly tokened URLs) right here.
 			v.Entity.Kind = scrub(v.Entity.Kind)
 			v.Entity.ID = scrub(v.Entity.ID)
-			// Free text
-			// is free text at ANY depth. A bare-string Expected/Actual leaked
-			// first; then the flagship example showed a secret riding inside a
-			// slice element or map key/value must not slip past a bare-string check.
-			// scrubDeep walks the whole value.
+			// Free text is free text at any depth: a secret can ride inside
+			// a slice element or a map key/value, not just a bare string, so
+			// a shallow check would miss it. scrubDeep walks the whole
+			// value.
 			if v.Expected != nil {
 				v.Expected = scrubDeep(v.Expected, scrub)
 			}

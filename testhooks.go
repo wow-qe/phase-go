@@ -11,7 +11,7 @@ import (
 )
 
 // This file is the sanctioned seam between the engine and phasetest: the few
-// constructions consumer TESTS need that production code must not have. They
+// constructions consumer tests need that production code must not have. They
 // are exported functions rather than back doors so the boundary is visible,
 // documented, and greppable.
 
@@ -35,16 +35,16 @@ func WithScope(s Scope) RunOption {
 	return func(r *Run) { r.scope = s }
 }
 
-// WithPhase installs the phase attribution and resolved timing, as the Runner
-// would before invoking a phase (A1: on the handle, at construction).
+// WithPhase installs the phase attribution and resolved timing, as the
+// Runner would before invoking a phase — on the handle, at construction.
 func WithPhase(id ID, t Timing) RunOption {
 	return func(r *Run) { r.phase, r.timing = id, t }
 }
 
 // NewRunForTesting constructs a Run outside the Runner — for phasetest and
 // for consumers unit-testing a phase against fakes. Production code
-// constructs runs only through Runner.Start; the name is deliberately
-// awkward in production code review.
+// constructs runs only through Runner.Start; this is a sanctioned test
+// seam, named to discourage accidental production use.
 func NewRunForTesting(c Case, opts ...RunOption) *Run {
 	r := newRun(c, Scope{CaseID: idOrEmpty(c), Correlation: "test"})
 	for _, opt := range opts {
@@ -60,12 +60,11 @@ func idOrEmpty(c Case) string {
 	return c.ID()
 }
 
-// InterceptRecords installs a transform applied to every result THIS handle
-// records, before it reaches the ledger. It is the recorder-wrapping seam the
-// AlwaysPass mutation gate needs (phasetest); view-scoped, so the mutation
-// cannot leak past the phase deliberately being gutted. Like everything in
-// this file, it has no production caller — the name is deliberately awkward
-// in production code review.
+// InterceptRecords installs a transform applied to every result this handle
+// records, before it reaches the ledger. It is the recorder-wrapping seam
+// the AlwaysPass mutation gate needs (phasetest); view-scoped, so the
+// mutation cannot leak past the phase deliberately being gutted. Like
+// everything in this file, it has no production caller.
 func InterceptRecords(r *Run, f func(result.Result) result.Result) {
 	r.intercept = f
 }

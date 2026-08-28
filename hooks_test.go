@@ -13,10 +13,10 @@ import (
 	"github.com/wow-qe/phase-go/result"
 )
 
-// Before probes preconditions on the phase's own
-// bound view; After concludes on every post-Before path; both fold into the
-// ONE outcome row a phase lands, and everything they record rides the
-// existing Recorder/finish() machinery — no separate hook status channel.
+// Before probes preconditions on the phase's own bound view; After
+// concludes on every post-Before path; both fold into the single outcome
+// row a phase lands, and everything they record rides the existing
+// Recorder/finish() machinery — no separate hook status channel.
 
 // hookedPhase is a stubPhase with optional Before/After behaviour.
 type hookedPhase struct {
@@ -106,7 +106,7 @@ func TestBeforeFailureSkipsRunAndPrunesDependents(t *testing.T) {
 }
 
 func TestBeforeViolationPatternFailsTheCase(t *testing.T) {
-	// The two-fact pattern: a precondition VIOLATION records evidence AND
+	// The two-fact pattern: a precondition violation records evidence and
 	// returns the error — the case derives Failed through the existing
 	// single-writer path, with zero hook-specific derivation code.
 	r := mustRunner(t, Config{Defaults: validTiming()},
@@ -210,8 +210,8 @@ func TestHookEvidenceCountsForThePhase(t *testing.T) {
 	if po.Results != 3 {
 		t.Fatalf("results_recorded = %d, want 3 — hook evidence rides the same handle", po.Results)
 	}
-	// The sibling count: the row must also say how many of those FAILED, closing
-	// the "row says Passed, results say failing" reading gap.
+	// The outcome row also reports how many of the recorded results
+	// were failing, distinct from the total results_recorded count.
 	if po.Failing != 1 {
 		t.Fatalf("failing_recorded = %d, want 1", po.Failing)
 	}
@@ -272,7 +272,7 @@ func TestHookPanicsAreContained(t *testing.T) {
 }
 
 func TestSettleDelayRunsBeforeBefore(t *testing.T) {
-	// Before must probe a SETTLED system — the delay exists precisely so
+	// Before must probe a settled system — the delay exists precisely so
 	// assertion-adjacent logic does not fire early and fail spuriously.
 	var order []string
 	r := mustRunner(t, Config{
@@ -284,7 +284,7 @@ func TestSettleDelayRunsBeforeBefore(t *testing.T) {
 		},
 	)
 	// The runner's run uses the real sleeper; a 1ns settle completes
-	// immediately but MUST have been initiated before Before ran. We assert
+	// immediately but must have been initiated before Before ran. We assert
 	// ordering via the progress stream, which fires "started" before the
 	// settle sleep.
 	var events []string
@@ -299,11 +299,9 @@ func TestSettleDelayRunsBeforeBefore(t *testing.T) {
 }
 
 func TestBeforeViolationKeepsTheErrorChannelClean(t *testing.T) {
-	// The violation path must not also write
-	// cr.Errors - the field whose documented purpose is environment trouble
-	// - so an on-call filter on len(Errors) paged for a clean product
-	// defect. A recorded violation is a product fact; only an UNRECORDED
-	// Before failure is environment noise.
+	// A recorded violation is a product fact and must not also appear in
+	// cr.Errors, whose purpose is environment trouble. Only an unrecorded
+	// Before failure counts as environment noise and lands in Errors.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&hookedPhase{stubPhase: stubPhase{id: "settle"},
 			before: func(_ context.Context, run *Run) error {
@@ -319,7 +317,7 @@ func TestBeforeViolationKeepsTheErrorChannelClean(t *testing.T) {
 	if len(cr.Errors) != 0 {
 		t.Fatalf("cr.Errors = %+v — a recorded violation must not page the environment channel", cr.Errors)
 	}
-	// And the inverse still holds: an unrecorded Before failure IS
+	// And the inverse still holds: an unrecorded Before failure is
 	// environment noise and lands in Errors.
 	r2 := mustRunner(t, Config{Defaults: validTiming()},
 		&hookedPhase{stubPhase: stubPhase{id: "settle"},

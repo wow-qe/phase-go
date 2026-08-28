@@ -11,9 +11,9 @@ import (
 	"testing"
 )
 
-// The ARCHITECTURE tables render FROM the code's own transition and
-// capability tables — a failing test cannot drift the way an un-run
-// generator can (the TestSchemaSurfaceIsFullyTagged doctrine, generalized).
+// The tables rendered into docs/ARCHITECTURE.md are generated from the
+// code's own transition and capability tables, so this test keeps them in
+// sync: a failing test catches drift that an un-run generator would miss.
 
 func renderCapabilityTable() string {
 	order := []stageKind{stageExec, stageWhen, stageGroupSetup, stageGroupTeardown,

@@ -11,7 +11,7 @@ import (
 // ProgressEvent is one landing in the run's visible heartbeat: a 20×15s
 // settle is otherwise silent for five minutes — indistinguishable from a
 // hang. Stage is "started" or "finished"; Status is meaningful only when
-// Stage is "finished". EVERY phase outcome emits a finished event — a skip
+// Stage is "finished". Every phase outcome emits a finished event — a skip
 // is a landing too, because a silent skip reads exactly like the hang the
 // event exists to rule out.
 type ProgressEvent struct {

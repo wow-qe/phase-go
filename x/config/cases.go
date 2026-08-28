@@ -13,13 +13,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Case manifests: the declarative half of a case as YAML, so a QE who
-// is not Go-fluent can author one. Per the recorded A8 decision this is a
-// consumer FACTORY's scaffolding — spec + fixture-name registry — never a
-// generic Case decoder: behaviour (adapters, comparators, params semantics)
-// stays in the consumer's code; declaration becomes data. Every refusal is
-// a typed *phase.LoadError at load time, because a manifest typo that
-// silently does nothing is the defect class this library exists against.
+// Case manifests: the declarative half of a case as YAML, so a quality
+// engineer who is not Go-fluent can author one. This is scaffolding for a
+// consumer factory — spec + fixture-name registry — never a generic Case
+// decoder: behaviour (adapters, comparators, params semantics) stays in the
+// consumer's code; declaration becomes data. Every refusal is a typed
+// *phase.LoadError at load time, because a manifest typo that silently does
+// nothing is the defect class this library exists against.
 
 // CaseSpec is one case's declarative surface, as loaded.
 type CaseSpec struct {
@@ -34,7 +34,7 @@ type CaseSpec struct {
 }
 
 // Registry maps fixture names to constructors — the consumer's half of the
-// A8 factory: it owns which fixtures exist and what the names mean.
+// factory: it owns which fixtures exist and what the names mean.
 type Registry map[string]func() phase.Fixture
 
 // LoadCases reads a case manifest file. File errors are environment
