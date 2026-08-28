@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local generated Graphify output is not a release input"
+paths = ['''^graphify-out/''']

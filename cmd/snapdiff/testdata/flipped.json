@@ -1,0 +1,50 @@
+{
+  "schema_version": "1",
+  "session": {
+    "id": "session-456",
+    "started": "2026-08-27T11:00:00Z",
+    "finished": "2026-08-27T11:05:00Z"
+  },
+  "cases": [
+    {
+      "id": "case_one",
+      "status": "passed",
+      "phases": [
+        {
+          "id": "phase_a",
+          "status": "passed"
+        }
+      ],
+      "results": [
+        {
+          "phase": "phase_a",
+          "result": {
+            "name": "check_one",
+            "entity": {
+              "kind": "entity",
+              "id": "ent_1"
+            },
+            "passed": false,
+            "reason": "now failing",
+            "comparisons": 1
+          }
+        }
+      ],
+      "observations": [],
+      "errors": [],
+      "started": "2026-08-27T11:00:00Z",
+      "finished": "2026-08-27T11:01:00Z"
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "not_applicable": 0,
+    "disabled": 0,
+    "errored": 0,
+    "flaked": 0
+  },
+  "not_verified": []
+}

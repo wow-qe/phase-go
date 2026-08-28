@@ -1,0 +1,47 @@
+{
+  "cases": [
+    {
+      "id": "case_one",
+      "status": "passed",
+      "phases": [
+        {
+          "id": "phase_a",
+          "status": "passed",
+          "results": [
+            {
+              "name": "check_one",
+              "entity": {
+                "kind": "entity",
+                "id": "ent_1"
+              },
+              "passed": true,
+              "comparisons": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "case_two",
+      "status": "failed",
+      "failed_in": "phase_b",
+      "phases": [
+        {
+          "id": "phase_b",
+          "status": "failed",
+          "results": [
+            {
+              "name": "check_two",
+              "entity": {
+                "kind": "entity",
+                "id": "ent_2"
+              },
+              "passed": false,
+              "comparisons": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

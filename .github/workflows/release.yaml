@@ -1,0 +1,68 @@
+# Copyright 2026 The Phase Contributors
+# SPDX-License-Identifier: MIT
+name: Release
+
+on:
+  push:
+    # Multi-module repo: the root, x/config and x/comparators release
+    # in LOCKSTEP. Tagging vX.Y.Z alone leaves the extension modules
+    # unpublishable - Go resolves each submodule's version only from its
+    # own x/<name>/vX.Y.Z tag.
+    tags: ["v*", "x/config/v*", "x/comparators/v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Publish Go module release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Validate semantic version tag
+        shell: bash
+        run: >-
+          [[ "${GITHUB_REF_NAME##*/}" =~
+          ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]
+      - name: Require an annotated tag
+        # The release policy (docs/RELEASING.md) requires signed annotated
+        # tags. A lightweight tag has no tag OBJECT, so this check enforces
+        # the annotated half mechanically; signature verification needs the
+        # signer's key and stays a documented manual step in the runbook.
+        run: |
+          git fetch --no-tags origin "+refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME" 2>/dev/null || true
+          [[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]
+      - name: Require release commit on main
+        run: git fetch --no-tags origin main && git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Verify lockstep tags on this commit
+        # Lockstep, enforced not just documented: the SAME version must be tagged
+        # for the root and BOTH extension modules, all pointing at the SAME
+        # commit. An incomplete tag set must fail loudly here, not publish
+        # a partial release that claims lockstep.
+        shell: bash
+        run: |
+          git fetch --tags --force origin
+          version="${GITHUB_REF_NAME##*/}"
+          for t in "$version" "x/config/$version" "x/comparators/$version"; do
+            sha="$(git rev-list -n1 "refs/tags/$t" 2>/dev/null)" || { echo "missing lockstep tag: $t"; exit 1; }
+            [[ "$sha" == "$GITHUB_SHA" ]] || { echo "tag $t points at $sha, not $GITHUB_SHA"; exit 1; }
+          done
+      - name: Verify release
+        run: make ci
+      - name: Publish GitHub release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # One GitHub release per ROOT tag; the x/ tags publish the extension
+        # modules to the Go module proxy but need no separate release page.
+        if: ${{ !startsWith(github.ref_name, 'x/') }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

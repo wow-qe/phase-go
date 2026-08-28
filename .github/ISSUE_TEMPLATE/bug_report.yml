@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a reproducible defect in Phase Go
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report vulnerabilities here; follow SECURITY.md.
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide the smallest code sample and exact commands.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Phase Go version
+      placeholder: v0.x.y or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: go-version
+    attributes:
+      label: Go version and platform
+      placeholder: go1.25.x linux/amd64
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

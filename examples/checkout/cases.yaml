@@ -1,0 +1,68 @@
+# The checkout suite, authored as data (Q2/A8): declaration in YAML,
+# behavior in Go. Tags form the suites; params are the consumer's payload.
+cases:
+  - id: happy-single
+    tags: [smoke, payments]
+    fixtures: [seed-catalog]
+    params:
+      scenario: happy
+      entities: 1
+
+  - id: happy-multi
+    tags: [regression, payments]
+    fixtures: [seed-catalog]
+    timing:
+      settle_wait:
+        attempts: 10
+    params:
+      scenario: happy
+      entities: 3
+
+  - id: declined-payment
+    tags: [regression, negative]
+    fixtures: [seed-catalog]
+    declines:
+      settle_wait: "a declined payment never settles; nothing to wait for"
+      settle_checks: "a declined payment never settles; nothing to check"
+      ledger: "no settlement, no ledger rows"
+      refund_audit: "refunds are the processor's own flow for declines"
+      audit: "audit covers settled orders only"
+    params:
+      scenario: declined
+      entities: 1
+
+  - id: billing-report
+    tags: [regression, billing]
+    fixtures: [seed-catalog]
+    params:
+      scenario: happy
+      entities: 2
+
+  - id: reconcile
+    tags: [nightly]
+    fixtures: [seed-catalog]
+    exclusive: "reconciliation counts global stream subscriptions; nothing else may run"
+    params:
+      scenario: happy
+      entities: 1
+
+  - id: parked-experiment
+    status: quarantined
+    tags: [experimental]
+    params:
+      scenario: happy
+      entities: 1
+
+  - id: blocked-refunds
+    status: blocked
+    tags: [payments]
+    params:
+      scenario: happy
+      entities: 1
+
+  - id: draft-loyalty
+    status: draft
+    tags: [experimental]
+    params:
+      scenario: happy
+      entities: 1

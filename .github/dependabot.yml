@@ -1,0 +1,36 @@
+# Copyright 2026 The Phase Contributors
+# SPDX-License-Identifier: MIT
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: deps
+    labels:
+      - dependencies
+    open-pull-requests-limit: 5
+    groups:
+      routine-updates:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+    open-pull-requests-limit: 5
+    groups:
+      routine-updates:
+        patterns:
+          - "*"

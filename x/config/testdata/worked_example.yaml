@@ -1,0 +1,10 @@
+defaults: {attempts: 3, interval: 5s, timeout: 60s}
+phases:
+  submit: {}
+  discover: {depends_on: [submit], attempts: 10, interval: 2s}
+  progress:
+    depends_on: [discover]
+    sub:
+      verify_frozen: {optional: true}
+  provider_side: {depends_on: [settle], enabled: false}
+  ledger: {settle_delay: 10s}
