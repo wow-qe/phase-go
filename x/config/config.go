@@ -7,7 +7,7 @@
 //
 // Unknown keys are a load-time error (*phase.LoadError, code
 // unknown_config_key): a typo in a config file must stop the run, because a
-// silently-dropped key is how an operator kill-switch becomes inert
+// silently-dropped key is how an operator disable switch becomes inert
 // (unknown keys are load-time errors).
 package config
 

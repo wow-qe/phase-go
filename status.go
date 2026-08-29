@@ -23,8 +23,8 @@ const (
 	// from NotApplicable so deliberate coverage loss is visible as such.
 	Disabled
 	// Errored: the environment or an adapter failed; the case's assertions
-	// were not completed. Not a product failure — reporting it as one sends
-	// someone to debug the wrong thing.
+	// were not completed. Not a product failure — reporting it as one
+	// misdirects debugging.
 	Errored
 	// Flaked: passed, but only on a tolerated retry. "Passed on attempt 3"
 	// is a different fact from "passed", and the report must not launder it.

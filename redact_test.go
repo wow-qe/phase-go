@@ -88,7 +88,7 @@ func TestConfigRedactKeysAppliesAtReportBuild(t *testing.T) {
 
 func TestUnredactableValueIsReplacedWhole(t *testing.T) {
 	// A value that cannot be inspected (unmarshallable) cannot be verified
-	// clean — the safe failure is to redact all of it, loudly.
+	// clean — the safe behavior is to redact the whole value and mark it.
 	r := mustRunner(t, Config{Defaults: validTiming()},
 		&recordingPhase{stubPhase: stubPhase{id: "submit"}, do: func(_ context.Context, run *Run) error {
 			run.Observe("weird", make(chan int)) // json.Marshal fails on channels

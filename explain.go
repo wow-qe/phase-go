@@ -5,10 +5,10 @@ package phase
 
 import "sort"
 
-// Explain answers "what would this run do" without executing anything: the
-// dry-run/explain-plan the assembly-line vocabulary makes nearly free. It
-// subsumes Preflight — its first act is the same validation Start performs,
-// so every LoadError surfaces here, statically.
+// Explain answers "what would this run do" without executing anything —
+// a dry-run projection of the plan. It subsumes Preflight: its first act
+// is the same validation Start performs, so every LoadError surfaces
+// here, statically.
 //
 // Each phase's disposition is a three-way answer — will-run, declined (with
 // the same structured DeclineSource the report uses), or conditional: a

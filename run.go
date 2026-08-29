@@ -24,7 +24,7 @@ import (
 //
 // Recording into a case whose verdict has already been derived panics
 // (testing.T's choice for Log-after-test, for the same reason): evidence
-// silently dropped after completion is a hole in the report nobody can see.
+// silently dropped after completion is an invisible gap in the report.
 // A goroutine a phase spawns must finish before the phase returns, or carry
 // its own synchronisation.
 type Recorder interface {
@@ -254,7 +254,7 @@ func (r *Run) Observe(name string, value any) {
 	defer r.core.mu.Unlock()
 	r.core.mustBeOpen("Observe", r.phase)
 	if r.core.obsLimit > 0 && len(r.core.observations) >= r.core.obsLimit {
-		r.core.droppedObs++ // counted, and reported loudly at finish
+		r.core.droppedObs++ // counted; a marker observation reports the total at finish
 		return
 	}
 	r.core.observations = append(r.core.observations, Observation{
@@ -279,7 +279,7 @@ func (r *Run) Transcribe(op string, request, response any) {
 }
 
 // Fail records an environment/adapter error. The case becomes Errored, not
-// Failed: reporting an outage as a product failure sends someone to debug the
+// Failed: reporting an outage as a product failure misdirects debugging toward the
 // wrong thing.
 func (r *Run) Fail(err error) {
 	if err == nil {

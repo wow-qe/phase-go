@@ -75,7 +75,7 @@ func TestLoadWorkedExample(t *testing.T) {
 	}
 
 	// The nil-vs-false distinction on Enabled, asserted explicitly: absent
-	// inherits, false is the operator kill-switch.
+	// inherits, false disables the phase.
 	if got.Phases["submit"].Enabled != nil {
 		t.Errorf("submit.Enabled = %v, want nil (absent must stay nil)", *got.Phases["submit"].Enabled)
 	}

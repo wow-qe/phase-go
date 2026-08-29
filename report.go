@@ -28,7 +28,7 @@ type Report struct {
 	NotVerified []string     `json:"not_verified"`
 	// Diagnostics carries engine-level degradations that altered no verdict
 	// but the reader must know about - e.g. contained observer panics:
-	// live observability was degraded, loudly.
+	// live observability was degraded; recorded so the report says so.
 	Diagnostics []string `json:"diagnostics,omitempty"`
 }
 
@@ -89,7 +89,7 @@ func (s *Session) Report() *Report {
 			}
 		}
 	}
-	// What this run did not verify, said once and loudly rather than left to
+	// What this run did not verify, stated once explicitly rather than left to
 	// be summed out of per-case rows.
 	for _, id := range disabledOrder {
 		rep.NotVerified = append(rep.NotVerified,
@@ -119,7 +119,7 @@ func (s *Session) Report() *Report {
 //	   they are visible in the report and in NotVerified instead)
 //	1  at least one case Failed or Errored
 //	3  Verify() failed: the report is internally inconsistent and the
-//	   numbers cannot be trusted — exiting 1 would send someone to debug
+//	   numbers cannot be trusted — exiting 1 would misdirect debugging
 //	   the product when the bug is in phase
 //
 // (2 is the LoadError exit, mapped by the entry point before a report
@@ -137,7 +137,8 @@ func (r *Report) ExitCode() int {
 // Verify asserts the report's internal consistency. It is an assertion, not a
 // repair: deriving outcomes from evidence (runner.finish) removes the cause
 // of an inconsistent report, and Verify removes the doubt. If it returns an
-// error, phase has a bug — file it against phase, not against the suite.
+// error, the inconsistency originates in this library, not in the suite
+// under test.
 func (r *Report) Verify() error {
 	if r.Schema != SchemaVersion {
 		return &FrameworkError{Invariant: "schema version",
@@ -211,7 +212,7 @@ func (r *Report) Verify() error {
 			recount.Flaked++
 			// Flaked means passed on a tolerated retry, which requires
 			// evidence of passing and no failed comparisons. A Flaked case
-			// with no results is a status nobody earned.
+			// with no results is a status without supporting evidence.
 			if results == 0 || failing > 0 {
 				return &FrameworkError{Invariant: "flaked means passed on retry",
 					Detail: fmt.Sprintf("case %q is Flaked with %d result(s), %d failing", cr.CaseID, results, failing)}

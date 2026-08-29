@@ -60,7 +60,7 @@ func Keys(ks ...keyed) []KeyID {
 // Put stores a phase's produced value on the run. A duplicate Put of the same
 // key in one run is a framework-invariant violation and panics via the run's
 // invariant handler — the graph validation should have made it impossible, so
-// reaching it means a phase lied about Produces().
+// reaching it means a phase's Produces() declaration was not honored.
 func Put[T any](r *Run, k Key[T], v T) {
 	if err := tryPut(r, k, v); err != nil {
 		r.Fail(err)

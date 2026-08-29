@@ -93,10 +93,10 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 		r.byID[ph.ID()] = ph
 	}
 
-	// Configuration may only speak about phases that exist. A config entry
-	// for a missing phase is a typo or a phase someone deleted without
-	// cleaning up — and a typo'd entry is an operator switch that silently
-	// does nothing, the exact defect class this library was built against.
+	// Configuration may only reference phases that exist. A config entry
+	// naming a missing phase is either a typo or a leftover from a removed
+	// phase; accepting it would leave an operator switch that silently has
+	// no effect, so it is rejected at construction.
 	for id := range cfg.Phases {
 		if _, ok := r.byID[id]; !ok {
 			return nil, &LoadError{Code: UnknownPhaseInConfig, Subject: string(id),
@@ -104,7 +104,7 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 		}
 	}
 
-	// Settings.Sub is superseded by Group and refused loudly: config that
+	// Settings.Sub is superseded by Group and refused with a typed error: config that
 	// still says sub: fails here, rather than silently doing nothing.
 	for id, st := range cfg.Phases {
 		if len(st.Sub) > 0 {
@@ -659,8 +659,9 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	}
 	cr.Correlation = scope.Correlation // the thread joining this report to the system's own logs
 
-	// Fixtures: set up in order; tear down in reverse, always — a cancelled
-	// or panicking run that leaks fixtures poisons the next run.
+	// Fixtures: set up in order; tear down in reverse, on every path — a
+	// cancelled or panicking run must not leak fixture state into
+	// subsequent runs.
 	//
 	// Teardown is an explicit call before finish, not a defer: a deferred
 	// teardown would run after finish() has already derived the case's
@@ -693,7 +694,7 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	r.teardownFixtures(built, run, &cr)
 	// Finish drains and seals the ledger under one lock — the verdict and
 	// the closing are atomic, so no straggler can slip evidence in between.
-	// A goroutine recording after this panics loudly instead of silently
+	// A goroutine recording after this panics instead of silently
 	// dropping evidence the report will never show.
 	r.finish(run, &cr)
 	return cr
@@ -824,7 +825,7 @@ func (r *Runner) runPhases(ctx context.Context, c Case, run *Run, cr *CaseReport
 			return PhaseOutcome{ID: id, Status: Errored, Reason: "cancelled"}, nil, started
 		}
 
-		// Operator kill-switch: deliberate coverage loss, visible as such.
+		// Operator-disabled: deliberate coverage loss, visible as such.
 		if en := r.config.Phases[id].Enabled; en != nil && !*en {
 			return PhaseOutcome{ID: id, Status: Disabled, Reason: "disabled by configuration",
 				DeclineSource: DeclinedByConfig}, nil, started

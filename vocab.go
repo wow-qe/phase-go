@@ -37,7 +37,7 @@ const (
 	DeclinedByCase       DeclineSource = "case"        // Case.Selects said no
 	DeclinedByPhase      DeclineSource = "phase"       // AppliesTo said no
 	DeclinedByCondition  DeclineSource = "condition"   // When said no
-	DeclinedByConfig     DeclineSource = "config"      // operator kill-switch
+	DeclinedByConfig     DeclineSource = "config"      // disabled by configuration
 	DeclinedByDependency DeclineSource = "dependency"  // pruned: a dependency errored
 	DeclinedByGroupSetup DeclineSource = "group_setup" // its group's world could not be built
 )

@@ -11,8 +11,8 @@ import (
 // Scope makes one case's traffic distinguishable in every shared system it
 // touches. The framework allocates it — cases do not hand-pick identifiers,
 // because hand-picked identifiers collide, and a collision produces a false
-// report of a product defect: the most expensive failure there is, because
-// someone investigates the product.
+// report of a product defect — misdirecting investigation toward the
+// product is the most expensive failure mode.
 //
 // Correlation is deliberately separate from Keys. Scope keys make traffic
 // distinguishable in shared state (counters, resets, searches). The

@@ -55,7 +55,7 @@ func TestEvidenceIsAttributedToTheRecordingPhaseNotTheCurrentOne(t *testing.T) {
 
 func TestRecordingAfterTheCaseCompletesPanicsLoudly(t *testing.T) {
 	// Evidence recorded after a case's verdict has been derived must not
-	// vanish into a buffer nobody would ever read. Mirroring testing.T's
+	// vanish into a buffer that is never read. Mirroring testing.T's
 	// choice for Log-after-test, a loud panic beats a silently incomplete
 	// report.
 	var escaped *Run

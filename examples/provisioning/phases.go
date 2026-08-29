@@ -81,7 +81,7 @@ func (p *discover) AppliesTo(phase.Case, phase.Config) phase.Applicability { ret
 func (p *discover) Run(ctx context.Context, r *phase.Run) error {
 	id, err := phase.Get(r, RequestID)
 	if err != nil {
-		return err // fails loudly if submit never produced it
+		return err // returns an error if submit never produced it
 	}
 
 	// Wait for a condition, never a duration.

@@ -57,9 +57,9 @@ func setupID(g ID) ID    { return ID("group:" + string(g) + ":setup") }
 func teardownID(g ID) ID { return ID("group:" + string(g) + ":teardown") }
 
 // validateGroups refuses mis-declared groups at NewRunner and returns the
-// per-runner group table. Every refusal is a typed LoadError: a group typo
-// that silently did nothing would be indistinguishable from a group that
-// was never wired up.
+// per-runner group table. Every refusal is a typed LoadError: a
+// misdeclared group must fail construction rather than be silently
+// ignored.
 func (r *Runner) validateGroups(groups []Group) error {
 	for id := range r.byID {
 		if strings.Contains(string(id), ":") {
@@ -102,7 +102,7 @@ func (r *Runner) validateGroups(groups []Group) error {
 // phase-level concurrency two members can be "the first to reach
 // execution" simultaneously, and check-then-set booleans become TOCTOU
 // races. Holding mu across Setup also gives members the happens-before
-// they need: nobody proceeds until Setup's outcome is decided.
+// they need: no member proceeds until Setup's outcome is decided.
 type groupRun struct {
 	g        *Group
 	tearRank int
@@ -125,7 +125,7 @@ func (r *Runner) ensureSetup(ctx context.Context, gr *groupRun, run *Run, caseID
 		return
 	}
 	if err := gr.state.to(groupSettingUp); err != nil {
-		panic(err) // a bug in phase, loudly - the machine's whole point
+		panic(err) // internal invariant violation; the machine exists to surface it
 	}
 	sid := setupID(gr.g.ID)
 	sv := run.bound(sid, Timing{}, gr.g.Produces, true)

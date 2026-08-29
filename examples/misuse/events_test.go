@@ -55,7 +55,7 @@ func TestEventStreamGuaranteesHoldUnderChaos(t *testing.T) {
 	}
 
 	events := rec.Events()
-	// 2. Session brackets survive a red day.
+	// 2. Session bracket events are emitted even when cases fail.
 	if events[0].Kind() != phase.SessionStarted || events[len(events)-1].Kind() != phase.SessionFinished {
 		t.Fatal("the stream must stay bracketed by session events under chaos")
 	}

@@ -18,8 +18,8 @@ import (
 //	...
 //	phasetest.RunAsSubtests(t, s)
 //
-// gives `go test -run TestSuite/checkout-declined`, per-case timing, and
-// per-case CI rows for free.
+// provides `go test -run TestSuite/checkout-declined` filtering, per-case
+// timing, and per-case CI reporting.
 func RunAsSubtests(t *testing.T, s *phase.Session) {
 	t.Helper()
 	for _, cr := range s.Cases() {

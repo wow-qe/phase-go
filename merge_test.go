@@ -8,10 +8,10 @@ import (
 	"testing"
 )
 
-// Sharding is the only wall-clock lever while execution is sequential —
-// run shards in parallel CI jobs, merge the reports. A merge must refuse
-// anything that would make the combined report lie: schema mismatch,
-// duplicate case IDs, or a shard that does not verify.
+// Sharding runs suites across parallel CI jobs and merges the reports.
+// A merge must refuse anything that would make the combined report
+// misrepresent its inputs: schema mismatch, duplicate case IDs, or a
+// shard that does not verify.
 
 func shard(t *testing.T, ids ...string) *Report {
 	t.Helper()

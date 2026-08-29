@@ -19,7 +19,7 @@ type Session struct {
 	cases          []CaseReport
 	redactKeys     []string         // Config.RedactKeys, applied to every Report() built from this session
 	redactPatterns []*regexp.Regexp // Config.RedactPatterns, likewise
-	observerErrs   []error          // contained observer/progress panics - degraded observability, surfaced loudly
+	observerErrs   []error          // contained observer/progress panics - degraded observability, surfaced in the report
 }
 
 // ObserverErrors reports every contained observer/progress-callback panic:

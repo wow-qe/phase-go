@@ -20,5 +20,5 @@ type Applicability struct {
 func Applies() Applicability { return Applicability{Applies: true} }
 
 // Skip declines with a reason. An empty reason is a LoadError at preflight —
-// a skip nobody can explain is indistinguishable from a check that passed.
+// an unexplained skip is indistinguishable from a check that passed.
 func Skip(reason string) Applicability { return Applicability{Applies: false, Reason: reason} }

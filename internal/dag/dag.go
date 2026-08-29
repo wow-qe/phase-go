@@ -219,8 +219,9 @@ func findCycle(nodes []Node, allIDs map[string]bool) ([]string, error) {
 		}
 	}
 
-	// If no cycle found via DFS, return a minimal cycle (shouldn't happen if Kahn's detected it)
-	// This is a fallback
+	// Fallback when DFS finds no cycle even though Kahn's algorithm
+	// reported one: return a minimal self-referential path so the error
+	// still identifies an offending node.
 	for id := range nodeMap {
 		return []string{id}, nil
 	}

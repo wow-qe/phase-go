@@ -61,7 +61,7 @@ func caseDeps(c Case) []CaseRequirement {
 // validateCaseDeps refuses unknown targets and cycles at Preflight — cases
 // exist only there (NewRunner validates pipeline structure; Preflight
 // validates cases). A dependency whose target is not in the given set is
-// refused loudly even though it may exist elsewhere (a tag selector
+// refused with a typed error even though it may exist elsewhere (a tag selector
 // filtered it out): a structural dependency crossing a selection boundary
 // is a suite-authoring bug, and soft-skipping it would make the selected
 // suite report fine while structurally broken.

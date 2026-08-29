@@ -26,7 +26,7 @@ type Timing struct {
 
 // Settings is one phase's declared configuration node.
 type Settings struct {
-	// Enabled: nil inherits; false is the operator kill-switch ("don't test
+	// Enabled: nil inherits; false is the operator disable switch ("don't test
 	// the provider today"), reported as Disabled — deliberate coverage loss,
 	// visible as such.
 	Enabled *bool
@@ -56,7 +56,7 @@ type Config struct {
 	// Phases configures each phase by ID. An entry naming a phase the
 	// Pipeline does not contain is a LoadError (unknown_phase_in_config) —
 	// configuration for a phase that does not exist is either a typo or a
-	// phase someone deleted without cleaning up, and both should stop the
+	// leftover from a removed phase, and both should stop the
 	// run.
 	Phases map[ID]Settings
 	// RedactKeys names the keys whose values are redacted in every Report()

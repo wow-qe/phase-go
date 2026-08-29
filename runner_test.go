@@ -451,7 +451,7 @@ func TestCaseReportFinishedIsActuallySet(t *testing.T) {
 
 func TestPutOfAnUndeclaredKeyIsRefused(t *testing.T) {
 	// tryPut must enforce not only "one writer per key" but also that the
-	// writer declared the key in Produces(); otherwise a phase could lie
+	// writer declared the key in Produces(); otherwise a phase could misdeclare
 	// about its wiring and preflight's graph would silently diverge from
 	// runtime.
 	r := mustRunner(t, Config{Defaults: validTiming()},

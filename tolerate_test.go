@@ -105,8 +105,8 @@ func TestTolerateExhaustedRecordsTheFinalFailure(t *testing.T) {
 }
 
 func TestTolerateWithoutAReasonRefusesToRun(t *testing.T) {
-	// Tolerant comes with a stated reason. A tolerance nobody justified
-	// is a silent flake-swallower; refuse it as a failing result, loudly.
+	// Tolerate requires a stated reason: an unjustified tolerance would
+	// hide flakes without a trace, so it is refused as a failing result.
 	calls := 0
 	r := mustRunner(t, Config{Defaults: fastTolerantTiming()},
 		tolerantPhase("settle", "", 3, func(context.Context) result.Result {

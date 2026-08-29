@@ -283,7 +283,7 @@ func TestFullRegressionSequential(t *testing.T) {
 
 	// With case dependencies present, execution order is the deterministic
 	// DAG order (sorted ready-set), so happy-multi is the first case to read
-	// the ledger: it absorbs the flap and is loudly Flaked — never silently
+	// the ledger: it absorbs the flap and is reported Flaked — never silently
 	// Passed.
 	if got := caseRow(t, rep, "happy-multi").Status; got != phase.Flaked {
 		t.Fatalf("happy-multi = %v, want Flaked (Tolerate passed on a retry)", got)
@@ -527,7 +527,7 @@ func TestShardedRunsMergeIntoOneReport(t *testing.T) {
 	}
 }
 
-// --- the operator kill-switch: deliberate, loud coverage loss ---------------
+// --- the operator disable switch: deliberate, visible coverage loss -------
 
 func TestOperatorKillSwitchIsLoudCoverageLoss(t *testing.T) {
 	sys, cases := newSuite(t)
@@ -540,7 +540,7 @@ func TestOperatorKillSwitchIsLoudCoverageLoss(t *testing.T) {
 	if po.Status != phase.Disabled || po.DeclineSource != phase.DeclinedByConfig {
 		t.Fatalf("audit = %+v, want Disabled by configuration", po)
 	}
-	// The report's NotVerified section names the loss once and loudly —
+	// The report's NotVerified section names the loss explicitly —
 	// deliberate coverage loss must never sum silently out of per-case rows.
 	found := false
 	for _, line := range rep.NotVerified {

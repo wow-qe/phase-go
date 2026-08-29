@@ -219,7 +219,7 @@ func (h hookedFunc) After(ctx context.Context, r *phase.Run, _ phase.PhaseOutcom
 
 func TestGuttedNeutralisesHooks(t *testing.T) {
 	// A phase whose hooks still ran would read as "fully gutted" while its
-	// checks fire — the mutation gate would lie about what was removed.
+	// checks fire — the mutation gate would misreport what was removed.
 	b, a := false, false
 	g := phasetest.Gutted(hookedFunc{
 		Func:      phase.Func{PhaseID: "checks"},

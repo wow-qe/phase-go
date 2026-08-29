@@ -82,7 +82,7 @@ func TestExitCodes(t *testing.T) {
 	}
 
 	// A corrupted report must exit 3 — the numbers cannot be trusted, and
-	// exiting 1 would send someone to debug the product.
+	// exiting 1 would misdirect debugging toward the product.
 	green.Cases[0].Status = Failed // hand-corruption: status contradicts evidence
 	if got := green.ExitCode(); got != 3 {
 		t.Fatalf("corrupted: exit = %d, want 3", got)
@@ -179,7 +179,7 @@ func TestJSONCarriesTheSchemaAndTheEvidence(t *testing.T) {
 
 func TestNotVerifiedNamesDeliberateCoverageLoss(t *testing.T) {
 	// The report states what it did not verify. An operator-disabled
-	// phase is exactly that, and it must be said once, loudly — not left
+	// phase is exactly that, and it must be stated once, explicitly — not left
 	// to be summed out of per-case rows.
 	rep := mixedSession(t).Report()
 	found := false
