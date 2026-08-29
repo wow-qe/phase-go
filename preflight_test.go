@@ -6,6 +6,7 @@ package phase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -328,4 +329,63 @@ func TestNegativeObservationCapIsRefused(t *testing.T) {
 	cfg := Config{Defaults: validTiming(), MaxObservationsPerCase: -1}
 	_, err := NewRunner(NewPipeline(passingPhase("a", nil)), cfg)
 	wantCode(t, err, TimingInvalid)
+}
+
+func TestExecutionUsesThePreflightScopeSnapshot(t *testing.T) {
+	// The scope validated at preflight must be the scope executed: with a
+	// stateful allocator, re-allocating at execution would bypass the
+	// collision check entirely.
+	calls := 0
+	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
+	WithScopeAllocator(allocatorFunc(func(c Case) (Scope, error) {
+		calls++
+		if calls <= 2 {
+			return Scope{CaseID: c.ID(), Correlation: fmt.Sprintf("uniq-%d", calls)}, nil
+		}
+		return Scope{CaseID: c.ID(), Correlation: "dup"}, nil // collides if re-allocated
+	}))(r)
+	rep := startSession(t, r, &stubCase{id: "a"}, &stubCase{id: "b"}).Report()
+	seen := map[string]bool{}
+	for _, cr := range rep.Cases {
+		if seen[cr.Correlation] {
+			t.Fatalf("correlation %q appears twice — execution re-allocated instead of using the validated snapshot", cr.Correlation)
+		}
+		seen[cr.Correlation] = true
+	}
+	if calls != 2 {
+		t.Fatalf("allocator called %d times, want exactly once per case", calls)
+	}
+}
+
+func TestExecutionUsesThePreflightFixtureSnapshot(t *testing.T) {
+	// A non-idempotent Fixtures() must not turn a construction-time
+	// FixtureNil refusal into a runtime error: the slice validated at
+	// preflight is the slice that executes.
+	var journal []string
+	f := &journalFixture{name: "fx", journal: &journal}
+	fc := &flipFixtureCase{stubCase: stubCase{id: "flip"}, first: []Fixture{f}}
+	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
+	rep := startSession(t, r, fc).Report()
+	if rep.Cases[0].Status != Passed {
+		t.Fatalf("status = %v (%s) — the validated fixture slice must execute", rep.Cases[0].Status, rep.Cases[0].Reason)
+	}
+	if len(journal) != 2 {
+		t.Fatalf("journal = %v, want the validated fixture's setup and teardown", journal)
+	}
+}
+
+// flipFixtureCase returns its declared fixtures exactly once, then nil —
+// the non-idempotent shape the snapshot must neutralize.
+type flipFixtureCase struct {
+	stubCase
+	first []Fixture
+	given bool
+}
+
+func (c *flipFixtureCase) Fixtures() []Fixture {
+	if c.given {
+		return []Fixture{nil}
+	}
+	c.given = true
+	return c.first
 }

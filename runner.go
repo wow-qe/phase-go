@@ -479,7 +479,8 @@ const lateRank = int(^uint(0) >> 1)
 //   - fixtures set up in order, tear down in reverse, on every path;
 //   - the case's status is derived in exactly one place, from the evidence.
 func (r *Runner) Start(ctx context.Context, cases []Case) (*Session, error) {
-	if err := r.Preflight(cases); err != nil {
+	prepared, err := r.preflight(cases)
+	if err != nil {
 		return nil, err
 	}
 	s := &Session{id: newSessionID(), started: time.Now(),
@@ -491,13 +492,13 @@ func (r *Runner) Start(ctx context.Context, cases []Case) (*Session, error) {
 	// indexed writes, whatever the execution order.
 	s.cases = make([]CaseReport, len(cases))
 	if r.config.MaxCaseConcurrency > 1 && len(cases) > 1 {
-		r.runCasePool(ctx, cases, s)
+		r.runCasePool(ctx, cases, prepared, s)
 	} else {
 		done := map[string]Status{}
 		for _, idx := range caseOrder(cases) {
 			c := cases[idx]
 			r.emitEvent(CaseStartedEvent{eventBase: r.eventBaseFor(c.ID(), CaseStarted), DeclarationIndex: idx})
-			cr := r.caseOrSkip(ctx, c, done)
+			cr := r.caseOrSkip(ctx, prepared[idx], done)
 			done[c.ID()] = cr.Status
 			s.cases[idx] = cr
 			r.emitEvent(CaseFinishedEvent{eventBase: r.eventBaseFor(c.ID(), CaseFinished),
@@ -516,11 +517,11 @@ func (r *Runner) Start(ctx context.Context, cases []Case) (*Session, error) {
 // caseOrSkip runs the case, or synthesises the loud dependency-skip report
 // when a requirement is unmet - one derivation for both drivers. The done
 // map is only ever read on the calling (scheduler) goroutine.
-func (r *Runner) caseOrSkip(ctx context.Context, c Case, done map[string]Status) CaseReport {
-	if cr, unmet := dependencySkip(c, done); unmet {
+func (r *Runner) caseOrSkip(ctx context.Context, pc preparedCase, done map[string]Status) CaseReport {
+	if cr, unmet := dependencySkip(pc.c, done); unmet {
 		return cr
 	}
-	return r.runCase(ctx, c)
+	return r.runCase(ctx, pc)
 }
 
 // dependencySkip evaluates the case's requirements against completed
@@ -546,7 +547,7 @@ func dependencySkip(c Case, done map[string]Status) (CaseReport, bool) {
 // the pool refills after it - its whole point is that nothing else is
 // mid-flight while it mutates what it declared exclusive access to.
 // All bookkeeping lives on this one goroutine; workers only run cases.
-func (r *Runner) runCasePool(ctx context.Context, cases []Case, s *Session) {
+func (r *Runner) runCasePool(ctx context.Context, cases []Case, prepared []preparedCase, s *Session) {
 	n := len(cases)
 	limit := r.config.MaxCaseConcurrency
 	indeg := make([]int, n)
@@ -599,9 +600,9 @@ func (r *Runner) runCasePool(ctx context.Context, cases []Case, s *Session) {
 				go func(idx int, cr CaseReport) { results <- caseDone{idx: idx, cr: cr} }(idx, cr)
 				continue
 			}
-			go func(idx int, c Case) {
-				results <- caseDone{idx: idx, cr: r.runCase(ctx, c)}
-			}(idx, c)
+			go func(idx int, pc preparedCase) {
+				results <- caseDone{idx: idx, cr: r.runCase(ctx, pc)}
+			}(idx, prepared[idx])
 			if solo {
 				return
 			}
@@ -643,7 +644,8 @@ func newSessionID() string {
 // runCase executes one case end to end. It never returns an error: whatever
 // happens is evidence in the CaseReport, because a batch must survive any
 // single case.
-func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
+func (r *Runner) runCase(ctx context.Context, pc preparedCase) (cr CaseReport) {
+	c := pc.c
 	// Named result on purpose: a deferred write only reaches the caller
 	// through a named result. An unnamed local reassigned in a defer after
 	// "return cr" would copy the old value out before the deferred write
@@ -665,12 +667,9 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 		return cr
 	}
 
-	scope, err := r.allocator.Allocate(c)
-	if err != nil {
-		cr.Status = Errored
-		cr.Reason = fmt.Sprintf("scope allocation: %v", err)
-		return cr
-	}
+	// The scope was allocated and collision-checked at preflight; execution
+	// uses that exact snapshot.
+	scope := pc.scope
 	run := newRun(c, scope)
 	run.core.obsLimit = r.config.MaxObservationsPerCase
 	if len(r.eventObservers) > 0 {
@@ -695,7 +694,7 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 	// the defer holds because every consumer call between here and
 	// teardown is individually contained (runOnePhase, runOneSetup,
 	// runOneTeardown).
-	built := r.setupFixtures(ctx, c, run, &cr)
+	built := r.setupFixtures(ctx, pc, run, &cr)
 
 	if cr.Status != Errored { // setup succeeded: run the phases
 		r.runPhases(ctx, c, run, &cr)
@@ -728,18 +727,12 @@ func (r *Runner) runCase(ctx context.Context, c Case) (cr CaseReport) {
 // setupFixtures runs Setup in order, stopping at the first failure. It
 // returns the fixtures whose Setup was attempted — those are the ones whose
 // Teardown must run.
-func (r *Runner) setupFixtures(ctx context.Context, c Case, run *Run, cr *CaseReport) []Fixture {
+func (r *Runner) setupFixtures(ctx context.Context, pc preparedCase, run *Run, cr *CaseReport) []Fixture {
+	c := pc.c
 	var built []Fixture
-	for i, f := range c.Fixtures() {
-		// Defence-in-depth: even though Preflight validated a snapshot, a
-		// non-idempotent Case could return a nil here; treat it as a setup
-		// error, never a nil-deref panic.
-		if f == nil {
-			cr.Status = Errored
-			cr.Reason = fmt.Sprintf("fixture %d became nil after preflight", i)
-			run.Fail(fmt.Errorf("fixture %d is nil at setup", i))
-			break
-		}
+	// The slice validated at preflight is the slice that executes; a
+	// non-idempotent Fixtures() cannot substitute a different one here.
+	for i, f := range pc.fixtures {
 		built = append(built, f)
 		r.emitEvent(FixtureEvent{eventBase: r.eventBaseFor(c.ID(), FixtureSetupStarted), Index: i})
 		err := runOneSetup(ctx, f, run)
