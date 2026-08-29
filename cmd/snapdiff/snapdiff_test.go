@@ -263,8 +263,8 @@ func TestControlBytesInNamesAreSanitized(t *testing.T) {
 }
 
 func TestDuplicateJSONKeysRefusedOnCapture(t *testing.T) {
-	// Go's last-wins lets a report's second "cases"
-	// block override what a reader sees first, poisoning the baseline.
+	// Go's last-wins decoding lets a report's second "cases" block override
+	// the first, making the stored baseline inconsistent with its source.
 	dup := []byte(`{"schema_version":"1","cases":[{"id":"a","status":"passed","phases":[],"results":[]}],"cases":[{"id":"a","status":"failed","phases":[],"results":[]}],"summary":{},"not_verified":[]}`)
 	if _, err := captureSnapshot(dup); err == nil {
 		t.Fatal("a report with duplicate top-level keys must be refused, not last-wins-accepted")

@@ -146,7 +146,8 @@ func alwaysPassSession(t *testing.T, wrap func(phase.Interface) phase.Interface)
 
 func TestAlwaysPassFlipsTheWrappedPhasesFailure(t *testing.T) {
 	// The gate's meaning: if wrapping one phase in AlwaysPass flips a failing
-	// case green, that case's verdict was riding on that phase's comparisons.
+	// case green, that case's verdict was determined by that phase's
+	// comparisons.
 	if cr := alwaysPassSession(t, nil); cr.Status != phase.Failed {
 		t.Fatalf("unwrapped: status = %s, want Failed", cr.Status)
 	}

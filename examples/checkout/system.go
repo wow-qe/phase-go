@@ -3,7 +3,8 @@
 
 // Package checkout is a consumer example: one order-checkout flow
 // exercising every feature the library ships, deterministic and offline.
-// It acts as a compatibility canary for the library — the feature map in
+// It is compiled and tested in CI against every change, so a library
+// change that breaks it is a breaking change; the feature map in
 // README.md indexes where each capability is exercised.
 package checkout
 

@@ -13,9 +13,9 @@ import (
 
 // This file is the fake provisioning stack the example's phases exercise: a
 // queue, a database-backed store, an external provider's control plane, and
-// a settlement ledger. Each is deliberately simple — the point of the
-// example is the framework's contract, not a realistic async system, so
-// every fake resolves synchronously. A real adapter would poll, retry and
+// a settlement ledger. Each is deliberately simple — the example
+// demonstrates the framework's contract, not a realistic async system, so
+// every fake resolves synchronously. A production adapter would poll, retry and
 // eventually become consistent; phase.WaitUntil is written to tolerate that,
 // and these fakes just don't need it to.
 

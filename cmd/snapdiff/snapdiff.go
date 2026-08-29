@@ -207,7 +207,7 @@ func compareSnapshots(reportJSON []byte, snapshotJSON []byte) ([][]byte, error) 
 		caseMap[expected.Cases[i].ID] = &expected.Cases[i]
 	}
 
-	// Track which expected cases we've seen
+	// Expected cases already encountered
 	seenCases := make(map[string]bool)
 
 	// Process current cases
@@ -222,7 +222,7 @@ func compareSnapshots(reportJSON []byte, snapshotJSON []byte) ([][]byte, error) 
 					diffs = append(diffs, formatDiff("ADDED", currentCase.ID, phase.ID, result.Name, result.Entity, result.Passed))
 				}
 			}
-			// Also check case status change (shouldn't happen if case is new, but be thorough)
+			// A new case has no prior status; the branch is kept for completeness
 			continue
 		}
 

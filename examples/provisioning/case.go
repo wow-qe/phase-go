@@ -40,9 +40,9 @@ type Case struct {
 	Fault         string // entity ID the provider fixture should reject; "" for none
 
 	// admin is the provider control plane the Fault fixture injects into.
-	// Unexported: this package's own tests set it directly (white-box), as
-	// a real consumer would wire its own admin client at case-construction
-	// time rather than exposing it on every case.
+	// Unexported: this package's own tests set it directly (white-box);
+	// consumers wire their own admin client at case-construction time
+	// rather than exposing it on every case.
 	admin *Provider
 }
 

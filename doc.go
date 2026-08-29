@@ -12,7 +12,7 @@
 // defect is a suite that reports green while checking nothing. The same
 // posture runs through everything else: every skip carries a reason, an
 // interrupted run is Errored rather than Failed, and [Report.Verify]
-// re-checks the report's own consistency before you trust it.
+// re-checks the report's own internal consistency.
 //
 // The core objects:
 //

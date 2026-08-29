@@ -119,7 +119,7 @@ func Sort(nodes []Node) ([]string, error) {
 		slices.Sort(ready)
 	}
 
-	// If we didn't process all nodes, there's a cycle
+	// Processing fewer nodes than registered indicates a cycle
 	if len(result) != len(nodes) {
 		// Find the cycle
 		cycle, err := findCycle(nodes, idSet)
