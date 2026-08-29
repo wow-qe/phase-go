@@ -159,7 +159,7 @@ func decodeCase(n *yaml.Node, path string) (CaseSpec, error) {
 
 // Case resolves the spec against the registry into a runnable phase.Case.
 // An unknown fixture name refuses with the available names listed — a typo
-// that silently dropped a fixture would poison every case after it.
+// that silently dropped a fixture would corrupt every case after it.
 func (s CaseSpec) Case(reg Registry) (*SpecCase, error) {
 	fixtures := make([]phase.Fixture, 0, len(s.Fixtures))
 	for _, name := range s.Fixtures {

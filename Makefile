@@ -41,6 +41,10 @@ fmt-check: ## Fail when Go sources are not formatted
 		exit 1; \
 	}
 
+.PHONY: comment-check
+comment-check: ## Enforce the comment standard (patterns, stale claims, doc links)
+	$(GO) run ./cmd/commentcheck
+
 .PHONY: vet
 vet: ## Run go vet (root + submodules)
 	$(GO) vet ./...
@@ -80,10 +84,10 @@ deps: ## Download and verify module dependencies
 	$(GO) mod verify
 
 .PHONY: check
-check: fmt-check vet test ## Run the fast local quality gate
+check: fmt-check vet comment-check test ## Run the fast local quality gate
 
 .PHONY: ci
-ci: mod-tidy-check fmt-check vet test-race test-cover ## Run the core CI gate
+ci: mod-tidy-check fmt-check vet comment-check test-race test-cover ## Run the core CI gate
 
 .PHONY: clean
 clean: ## Remove local build and coverage artifacts

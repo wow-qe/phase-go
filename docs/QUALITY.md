@@ -37,3 +37,16 @@ Binary reproducibility, GoReleaser, SBOM generation, provenance attestations,
 API-diff gates, documentation deployment, and branch-coverage tooling should be
 added when Phase actually ships binaries or a stable public API. Enabling them
 before relevant artifacts exist would provide false assurance.
+
+## Comment standard
+
+Comments document what code does, the invariant it enforces, and why it
+matters — never development history, internal process vocabulary, or
+rhetoric. `make comment-check` (also part of `make check`, `make ci`, and
+the CI quality job) enforces this with three complementary methods:
+broad pattern scans over parsed comments, semantic verification (package
+doc links must resolve; a stale-claims ledger fails when prose
+contradicts current behavior), and full-tree re-checks after integration
+so a merge or revert that reintroduces a pattern fails the next run
+regardless of which change introduced it. Suppressions require an
+explicit `commentcheck:allow` marker and are counted in the output.
