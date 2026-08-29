@@ -48,6 +48,10 @@ binary-check: ## Fail when a compiled binary is tracked by git
 		if [ -n "$$bad" ]; then echo "tracked binaries:"; echo "$$bad"; exit 1; fi; \
 	fi
 
+.PHONY: boundary-check
+boundary-check: ## Enforce package-boundary and dependency-direction rules
+	$(GO) run ./cmd/boundcheck
+
 .PHONY: api-check
 api-check: ## Fail when the exported API differs from the committed baseline
 	@tmp=$$(mktemp); \
@@ -104,10 +108,10 @@ deps: ## Download and verify module dependencies
 	$(GO) mod verify
 
 .PHONY: check
-check: fmt-check vet comment-check binary-check test ## Run the fast local quality gate
+check: fmt-check vet comment-check binary-check boundary-check test ## Run the fast local quality gate
 
 .PHONY: ci
-ci: mod-tidy-check fmt-check vet comment-check binary-check api-check test-race test-cover ## Run the core CI gate
+ci: mod-tidy-check fmt-check vet comment-check binary-check boundary-check api-check test-race test-cover ## Run the core CI gate
 
 .PHONY: clean
 clean: ## Remove local build and coverage artifacts
