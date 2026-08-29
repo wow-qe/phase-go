@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -76,6 +77,19 @@ func WithScopeAllocator(a ScopeAllocator) RunnerOption {
 	}
 }
 
+// isNilPhase reports whether ph is nil directly or a typed-nil pointer.
+func isNilPhase(ph Interface) bool {
+	if ph == nil {
+		return true
+	}
+	v := reflect.ValueOf(ph)
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Map, reflect.Slice, reflect.Func, reflect.Chan:
+		return v.IsNil()
+	}
+	return false
+}
+
 func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 	r := &Runner{
 		byID:     make(map[ID]Interface, len(p.phases)),
@@ -84,8 +98,13 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 		config:   cfg,
 	}
 
-	// Identity: every phase exactly once.
+	// Identity: every phase non-nil (a typed-nil pointer would dereference
+	// inside the engine, so it is refused the same way) and exactly once.
 	for _, ph := range p.phases {
+		if isNilPhase(ph) {
+			return nil, &LoadError{Code: NilPhase, Subject: "<nil>",
+				Detail: "the pipeline contains a nil phase"}
+		}
 		if _, dup := r.byID[ph.ID()]; dup {
 			return nil, &LoadError{Code: DuplicatePhaseID, Subject: string(ph.ID()),
 				Detail: "two phases in the pipeline carry this ID"}
@@ -294,6 +313,12 @@ func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
 	if cfg.MaxPhaseConcurrency < 0 || cfg.MaxCaseConcurrency < 0 {
 		return nil, &LoadError{Code: TimingInvalid, Subject: "concurrency",
 			Detail: fmt.Sprintf("MaxPhaseConcurrency=%d MaxCaseConcurrency=%d: negative concurrency is not a thing", cfg.MaxPhaseConcurrency, cfg.MaxCaseConcurrency)}
+	}
+	// Only zero means unlimited retention; a negative cap is a
+	// configuration mistake, not a request for unlimited.
+	if cfg.MaxObservationsPerCase < 0 {
+		return nil, &LoadError{Code: TimingInvalid, Subject: "retention",
+			Detail: fmt.Sprintf("MaxObservationsPerCase=%d: only 0 means unlimited", cfg.MaxObservationsPerCase)}
 	}
 
 	// Redaction patterns must compile here — a pattern that fails to

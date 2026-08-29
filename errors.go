@@ -47,6 +47,8 @@ const (
 	GroupMemberDuplicate     LoadCode = "group_member_duplicate"
 	SettingsSubRemoved       LoadCode = "settings_sub_removed"
 	CaseDependencyUnknown    LoadCode = "case_dependency_unknown"
+	EmptySuite               LoadCode = "empty_suite"
+	NilPhase                 LoadCode = "nil_phase"
 	CaseDependencyCycle      LoadCode = "case_dependency_cycle"
 )
 

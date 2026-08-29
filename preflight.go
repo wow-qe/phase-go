@@ -10,6 +10,12 @@ import "fmt"
 // everything a case can get wrong: a skip with no reason, exclusivity with no
 // justification, a nil fixture, and scopes that collide.
 func (r *Runner) Preflight(cases []Case) error {
+	// Zero cases is a selection or wiring mistake; a green empty report
+	// would hide it, so it is refused here rather than reported as success.
+	if len(cases) == 0 {
+		return &LoadError{Code: EmptySuite, Subject: "<none>",
+			Detail: "no cases to run — an empty execution must not report success"}
+	}
 	seenCorrelation := map[string]string{} // correlation -> case that owns it
 	seenID := map[string]bool{}
 	for _, c := range cases {
@@ -17,6 +23,11 @@ func (r *Runner) Preflight(cases []Case) error {
 		if c == nil {
 			return &LoadError{Code: NilCase, Subject: "<nil>",
 				Detail: "the case slice contains a nil Case"}
+		}
+		// An anonymous case cannot be found in a report.
+		if c.ID() == "" {
+			return &LoadError{Code: CaseIDMissing, Subject: "<empty>",
+				Detail: "a case with an empty ID cannot be identified in the report"}
 		}
 		// IDs are documented unique within a session; enforce it, or two
 		// indistinguishable rows reach the report.

@@ -290,3 +290,42 @@ func TestWithScopeAllocatorInjectsTheConsumersAllocator(t *testing.T) {
 		t.Fatal("the injected allocator was never consulted")
 	}
 }
+
+func TestEmptySuiteIsRefused(t *testing.T) {
+	// Running nothing must not produce a green report: zero cases is a
+	// selection or wiring mistake, and a passing empty report would hide it.
+	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
+	if err := r.Preflight(nil); err == nil {
+		t.Fatal("nil case slice accepted")
+	}
+	_, err := r.Start(context.Background(), []Case{})
+	wantCode(t, err, EmptySuite)
+}
+
+func TestNilPhaseIsRefusedAtConstruction(t *testing.T) {
+	// A nil phase must be a typed construction refusal, never a panic:
+	// plain nil and a typed-nil pointer both dereference inside the engine
+	// otherwise.
+	_, err := NewRunner(NewPipeline(nil), Config{Defaults: validTiming()})
+	wantCode(t, err, NilPhase)
+
+	var typed *stubPhase
+	_, err = NewRunner(NewPipeline(passingPhase("a", nil), typed), Config{Defaults: validTiming()})
+	wantCode(t, err, NilPhase)
+}
+
+func TestEmptyCaseIDIsRefusedByPreflight(t *testing.T) {
+	// An anonymous case cannot be found in a report; the YAML loader
+	// already refuses this, and the core boundary must match it.
+	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
+	err := r.Preflight([]Case{&stubCase{id: ""}})
+	wantCode(t, err, CaseIDMissing)
+}
+
+func TestNegativeObservationCapIsRefused(t *testing.T) {
+	// Only zero means unlimited; a negative cap is a configuration mistake
+	// and silently treating it as unlimited would hide it.
+	cfg := Config{Defaults: validTiming(), MaxObservationsPerCase: -1}
+	_, err := NewRunner(NewPipeline(passingPhase("a", nil)), cfg)
+	wantCode(t, err, TimingInvalid)
+}
