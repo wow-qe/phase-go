@@ -11,7 +11,7 @@
 //     literals are never false positives) are matched against banned
 //     pattern classes — process/actor vocabulary, internal finding codes,
 //     history narration, rhetorical emphasis, and AI-assistant terms.
-//  2. Semantic verification: bracketed [Symbol] references in package doc
+//  2. Semantic verification: bracketed symbol references in package doc
 //     comments must resolve to identifiers declared in that package, and a
 //     stale-claims ledger fails the build when prose asserts behavior the
 //     code no longer has (each entry names the current fact).
@@ -20,9 +20,9 @@
 //     CI, so a merge, revert, or concurrent edit that reintroduces a
 //     pattern fails the next gate regardless of which change introduced it.
 //
-// A finding is suppressed only by an explicit `commentcheck:allow` marker
-// inside the same comment group; allowances are counted in the summary so
-// they stay visible.
+// A finding is suppressed only when a comment group contains a standalone
+// directive line consisting of the allow marker; allowances are counted in
+// the summary so they stay visible.
 package main
 
 import (
@@ -74,6 +74,18 @@ var staleClaims = []struct {
 
 const allowMarker = "commentcheck:allow"
 
+// hasAllowDirective reports whether the group contains the marker as a
+// standalone directive line. Prose that merely mentions the marker (this
+// file's own documentation, for example) does not suppress scanning.
+func hasAllowDirective(cg *ast.CommentGroup) bool {
+	for _, c := range cg.List {
+		if strings.TrimSpace(strings.TrimPrefix(c.Text, "//")) == allowMarker {
+			return true
+		}
+	}
+	return false
+}
+
 var docLink = regexp.MustCompile(`\[([A-Z][A-Za-z0-9_]*)(?:\.[A-Z][A-Za-z0-9_]*)?\]`)
 
 type finding struct {
@@ -101,7 +113,7 @@ func main() {
 
 	var findings []finding
 	var refs []docRef
-	decls := map[string]map[string]bool{} // package name -> declared identifiers
+	decls := map[string]map[string]bool{} // dir+package -> declared identifiers
 	allowed := 0
 
 	for _, path := range files {
@@ -111,9 +123,10 @@ func main() {
 			fmt.Fprintf(os.Stderr, "commentcheck: parse %s: %v\n", path, err)
 			os.Exit(2)
 		}
+		key := filepath.Dir(path) + ":" + af.Name.Name
 		findings = append(findings, scanComments(fs, af, &allowed)...)
-		collectDecls(af, decls)
-		refs = append(refs, collectDocRefs(fs, af)...)
+		collectDecls(af, decls, key)
+		refs = append(refs, collectDocRefs(fs, af, key)...)
 	}
 
 	// Second pass: package-doc [Symbol] links must resolve within their
@@ -157,7 +170,7 @@ func trackedGoFiles(root string) ([]string, error) {
 func scanComments(fs *token.FileSet, af *ast.File, allowed *int) []finding {
 	var out []finding
 	for _, cg := range af.Comments {
-		if strings.Contains(cg.Text(), allowMarker) {
+		if hasAllowDirective(cg) {
 			*allowed++
 			continue
 		}
@@ -179,11 +192,11 @@ func scanComments(fs *token.FileSet, af *ast.File, allowed *int) []finding {
 	return out
 }
 
-func collectDecls(af *ast.File, decls map[string]map[string]bool) {
-	m := decls[af.Name.Name]
+func collectDecls(af *ast.File, decls map[string]map[string]bool, key string) {
+	m := decls[key]
 	if m == nil {
 		m = map[string]bool{}
-		decls[af.Name.Name] = m
+		decls[key] = m
 	}
 	for _, d := range af.Decls {
 		switch dd := d.(type) {
@@ -207,13 +220,13 @@ func collectDecls(af *ast.File, decls map[string]map[string]bool) {
 // collectDocRefs gathers [Symbol] links from the package doc comment only:
 // that is the pkg.go.dev landing surface, where a dangling reference is
 // most damaging.
-func collectDocRefs(fs *token.FileSet, af *ast.File) []docRef {
+func collectDocRefs(fs *token.FileSet, af *ast.File, key string) []docRef {
 	if af.Doc == nil {
 		return nil
 	}
 	var refs []docRef
 	for _, m := range docLink.FindAllStringSubmatch(af.Doc.Text(), -1) {
-		refs = append(refs, docRef{af.Name.Name, m[1], fs.Position(af.Doc.Pos())})
+		refs = append(refs, docRef{key, m[1], fs.Position(af.Doc.Pos())})
 	}
 	return refs
 }

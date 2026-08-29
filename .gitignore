@@ -51,3 +51,4 @@ graphify-out/
 
 # Compiled binaries at package roots
 cmd/snapdiff/snapdiff
+/commentcheck

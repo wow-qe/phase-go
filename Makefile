@@ -41,6 +41,13 @@ fmt-check: ## Fail when Go sources are not formatted
 		exit 1; \
 	}
 
+.PHONY: binary-check
+binary-check: ## Fail when a compiled binary is tracked by git
+	@if command -v file >/dev/null 2>&1; then \
+		bad=$$(git ls-files -z | xargs -0 file | grep -E 'Mach-O|ELF|PE32' || true); \
+		if [ -n "$$bad" ]; then echo "tracked binaries:"; echo "$$bad"; exit 1; fi; \
+	fi
+
 .PHONY: comment-check
 comment-check: ## Enforce the comment standard (patterns, stale claims, doc links)
 	$(GO) run ./cmd/commentcheck
@@ -84,10 +91,10 @@ deps: ## Download and verify module dependencies
 	$(GO) mod verify
 
 .PHONY: check
-check: fmt-check vet comment-check test ## Run the fast local quality gate
+check: fmt-check vet comment-check binary-check test ## Run the fast local quality gate
 
 .PHONY: ci
-ci: mod-tidy-check fmt-check vet comment-check test-race test-cover ## Run the core CI gate
+ci: mod-tidy-check fmt-check vet comment-check binary-check test-race test-cover ## Run the core CI gate
 
 .PHONY: clean
 clean: ## Remove local build and coverage artifacts
