@@ -1,0 +1,62 @@
+# Copyright 2026 The Phase Contributors
+# SPDX-License-Identifier: MIT
+name: Release health
+
+# Tests the LATEST PUBLISHED artifacts from the public consumer boundary:
+# fresh modules, no workspace, no replace directives, resolution through
+# proxy.golang.org verified by sum.golang.org. This is the only check that
+# exercises what external consumers actually retrieve; repository CI
+# cannot see a broken or incomplete publication.
+
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-boundary:
+    name: Latest published release resolves for every consumer shape
+    runs-on: ubuntu-latest
+    env:
+      GOPROXY: https://proxy.golang.org
+      GOSUMDB: sum.golang.org
+    steps:
+      - name: Checkout repository (for the smoke script only)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: Determine latest published version and verify lockstep completeness
+        id: latest
+        shell: bash
+        run: |
+          root_latest="$(go list -m -versions github.com/wow-qe/phase-go | tr ' ' '\n' | tail -1)"
+          [[ "$root_latest" == v* ]] || { echo "no published root version found"; exit 1; }
+          echo "version=$root_latest" >> "$GITHUB_OUTPUT"
+          for m in x/config x/comparators; do
+            if ! go list -m -versions "github.com/wow-qe/phase-go/$m" | tr ' ' '\n' | grep -qx "$root_latest"; then
+              echo "INCOMPLETE LOCKSTEP: root $root_latest is published but github.com/wow-qe/phase-go/$m@$root_latest is not."
+              echo "Publish the missing extension tag for $root_latest (never move existing tags)."
+              exit 1
+            fi
+          done
+          echo "lockstep complete at $root_latest"
+      - name: Consumer shapes against the public proxy
+        shell: bash
+        env:
+          VERSION: ${{ steps.latest.outputs.version }}
+        run: |
+          v="$VERSION"
+          for mode in root config comparators all; do
+            sh scripts/consumer-smoke.sh "$mode" "$v" || {
+              echo "CONSUMER BREAKAGE: shape '$mode' cannot consume $v from the public proxy."
+              echo "Diagnose with: sh scripts/consumer-smoke.sh $mode $v (locally). Do not move tags; fix forward with a patch release."
+              exit 1
+            }
+          done
