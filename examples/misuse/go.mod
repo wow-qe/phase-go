@@ -3,9 +3,9 @@ module github.com/wow-qe/phase-go/examples/misuse
 go 1.25.8
 
 require (
-	github.com/wow-qe/phase-go v0.1.0
-	github.com/wow-qe/phase-go/x/comparators v0.1.0
-	github.com/wow-qe/phase-go/x/config v0.1.0
+	github.com/wow-qe/phase-go v0.1.2
+	github.com/wow-qe/phase-go/x/comparators v0.1.2
+	github.com/wow-qe/phase-go/x/config v0.1.2
 )
 
 require (

@@ -4,6 +4,53 @@ All notable changes to this project are documented here. The format follows
 Keep a Changelog; versions follow SemVer (pre-1.0: breaking changes only at
 minor bumps, each with a migration note).
 
+## [Unreleased] — v0.1.2 candidate
+
+Maintenance only: release correctness, documentation, tests and
+operational controls. No feature or exported-API changes (the API
+baseline gate pins the surface).
+
+### Fixed
+- `x/config` and `x/comparators` now require the root release they ship
+  with (previously they named the prior release; consumers resolving an
+  extension alone received the older root).
+- Construction refuses empty suites (`empty_suite`), nil and typed-nil
+  phases (`nil_phase`), empty case IDs, and negative
+  `MaxObservationsPerCase`.
+- Execution runs from the preflight snapshot: the validated scope and
+  fixture slice are exactly what executes; the scope allocator is
+  invoked once per case.
+- Reports, events and `Scope()` detach nested evidence; `NewRunner`
+  snapshots its `Config`, pipeline and groups — post-construction caller
+  mutations cannot change a runner, and one observer cannot affect
+  another's payload or retained session state.
+
+### Added (operational)
+- Consumer-boundary smoke tooling (`scripts/consumer-smoke.sh`, local
+  proxy rehearsal) with module-graph assertions per consumer shape.
+- Exported-API baseline gate, comment-standard gate, tracked-binary
+  gate, fuzz targets and seed corpora, goroutine-leak test, baseline
+  benchmarks.
+- Release workflow requires green CI and CodeQL on the release commit;
+  tag-immutability policy and incident record; determinism and
+  operating-envelope documentation; error-taxonomy statement on
+  `FrameworkError`.
+
+## [0.1.1] — 2026-08-29
+
+Security patch release, lockstep across the three modules.
+
+### Security
+- Go floor raised to 1.25.8 in every module: Go 1.25.0–1.25.7 carry
+  GO-2026-4602 (`os` package), reachable from this repository. The floor
+  policy: the minimum patch release tracks the oldest supported version
+  without known reachable standard-library vulnerabilities.
+
+### Known deviation (recorded at release time)
+- The extension modules' `go.mod` files named root `v0.1.0`; fixed in
+  the next release. Consumers requesting all modules together resolved
+  correctly; extension-only consumers received root `v0.1.0`.
+
 ## [0.1.0] — 2026-08-28
 
 The first public release. Everything below ships together; the three

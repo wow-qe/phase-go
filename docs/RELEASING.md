@@ -38,7 +38,11 @@ are provisioned in CI.
 
 1. Ensure `main` is green and the working tree is clean.
 2. Update `CHANGELOG.md`: stamp the release heading, verify the entries
-   and known-limits sections describe the code being tagged.
+   and known-limits sections describe the code being tagged. The
+   changelog must be finalized BEFORE the candidate SHA is declared —
+   the stamped entry is part of the release commit, never a follow-up
+   (a post-declaration stamp would move the SHA or ship without its
+   record).
 3. Confirm `x/config/go.mod` and `x/comparators/go.mod` `require` the
    version you are about to tag. Commit if they need bumping.
 4. Run `make ci` on the supported Go versions.
