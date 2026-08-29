@@ -1,7 +1,9 @@
 # Releasing
 
-Phase Go follows Semantic Versioning and uses annotated Git tags
-(signed once a maintainer release key is provisioned).
+Phase Go follows Semantic Versioning and uses annotated Git tags signed
+with the maintainer release key (Ed25519; committed public half at
+`.github/release-signing-key.asc`). v0.1.0 and v0.1.1 predate the key
+and remain annotated-unsigned, grandfathered and immutable.
 
 This is a **multi-module repository**. Three library modules are published,
 and they release in **lockstep** — the same version, tagged on the same
@@ -49,10 +51,14 @@ are provisioned in CI.
 5. Create the three annotated tags on the release commit:
 
    ```sh
-   git tag -a vX.Y.Z              -m "vX.Y.Z"
-   git tag -a x/config/vX.Y.Z     -m "x/config/vX.Y.Z"
-   git tag -a x/comparators/vX.Y.Z -m "x/comparators/vX.Y.Z"
+   git tag -s vX.Y.Z              -m "vX.Y.Z"
+   git tag -s x/config/vX.Y.Z     -m "x/config/vX.Y.Z"
+   git tag -s x/comparators/vX.Y.Z -m "x/comparators/vX.Y.Z"
    ```
+
+   (repository-local `user.signingkey`/`tag.gpgsign` select the release
+   key; the workflow verifies each tag's signature against the committed
+   public key)
 
 6. Push `main`, then all three tags together:
 
@@ -96,3 +102,25 @@ fixed. The final artifacts are consistent with sum.golang.org, and fresh
 consumers resolve correctly; a cache that fetched an intermediate payload
 must be cleared (`go clean -modcache`, or remove the module's entries).
 The workflow and this runbook now treat any published tag as frozen.
+
+## Release-key management
+
+- The release key is a dedicated Ed25519 signing-only key held by the
+  maintainer; the private half and any passphrase never enter the
+  repository. The public half is committed at
+  `.github/release-signing-key.asc` and registered on the maintainer's
+  GitHub account so tags render as Verified.
+- Backup: export the secret key (`gpg --export-secret-keys`) to an
+  encrypted offline location together with the revocation certificate
+  GnuPG generated at key creation.
+- Rotation: generate a successor key, commit its public half, sign the
+  next release with it, and keep the retiring public key in the file
+  until every tag it signed is superseded; the workflow accepts the keys
+  present in the committed file.
+- Revocation or loss: publish the revocation certificate, rotate as
+  above, and note the affected tag range in the changelog. Published
+  tags are never re-signed or moved.
+- Emergency release with the key unavailable: tag annotated-unsigned,
+  add the version to the workflow's grandfather list in the same commit,
+  and record the exception in the changelog; resume signing from the
+  next release.

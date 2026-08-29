@@ -34,15 +34,24 @@ jobs:
         run: >-
           [[ "${GITHUB_REF_NAME##*/}" =~
           ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]
-      - name: Require an annotated tag
-        # The release policy (docs/RELEASING.md) requires signed annotated
-        # tags. A lightweight tag has no tag OBJECT, so this check enforces
-        # the annotated half mechanically; signature verification needs the
-        # signer's key and stays a documented manual step in the runbook.
-        # fetch-depth: 0 above already brought every ref; no network here
-        # (checkout runs with persist-credentials: false, so a fetch would
-        # have no auth).
-        run: '[[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]'
+      - name: Require an annotated tag signed by the release key
+        # Every tag must be annotated (fetch-depth: 0 already brought every
+        # ref; no network here). Tags after v0.1.1 must additionally carry
+        # a good signature from the maintainer release key committed at
+        # .github/release-signing-key.asc; v0.1.0 and v0.1.1 predate the
+        # key and are grandfathered (annotated, unsigned, immutable).
+        shell: bash
+        run: |
+          [[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]
+          case "${GITHUB_REF_NAME##*/}" in
+          v0.1.0|v0.1.1) echo "grandfathered pre-signing tag" ;;
+          *)
+            gpg --import .github/release-signing-key.asc
+            fpr="$(gpg --with-colons --import-options show-only --import .github/release-signing-key.asc | awk -F: '/^fpr/{print $10; exit}')"
+            git verify-tag --raw "$GITHUB_REF_NAME" 2>&1 | grep -q "VALIDSIG $fpr" || {
+              echo "tag $GITHUB_REF_NAME is not signed by the approved release key $fpr"; exit 1; }
+            ;;
+          esac
       - name: Require release commit on main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - name: Verify lockstep tags on this commit
