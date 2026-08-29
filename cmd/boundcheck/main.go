@@ -43,16 +43,17 @@ func tree(p string) perm { return perm{path: p, subtree: true} }
 // exactly the engine and result — never on commands, examples or each
 // other; commands may use the engine side but not each other.
 var rules = map[string][]perm{
-	".":                {pkg(rootModule + "/result"), pkg(rootModule + "/internal/dag")},
-	"result":           {},
-	"internal/dag":     {},
-	"phasetest":        {pkg(rootModule), pkg(rootModule + "/result")},
-	"x/config":         {pkg(rootModule), pkg(rootModule + "/result"), pkg("gopkg.in/yaml.v3")},
-	"x/comparators":    {pkg(rootModule), pkg(rootModule + "/result"), tree("github.com/google/go-cmp")},
-	"cmd/snapdiff":     {pkg(rootModule), pkg(rootModule + "/result")},
-	"cmd/commentcheck": {},
-	"cmd/apidump":      {},
-	"cmd/boundcheck":   {},
+	".":                   {pkg(rootModule + "/result"), pkg(rootModule + "/internal/dag")},
+	"result":              {},
+	"internal/dag":        {},
+	"internal/scripttest": {},
+	"phasetest":           {pkg(rootModule), pkg(rootModule + "/result")},
+	"x/config":            {pkg(rootModule), pkg(rootModule + "/result"), pkg("gopkg.in/yaml.v3")},
+	"x/comparators":       {pkg(rootModule), pkg(rootModule + "/result"), tree("github.com/google/go-cmp")},
+	"cmd/snapdiff":        {pkg(rootModule), pkg(rootModule + "/result")},
+	"cmd/commentcheck":    {},
+	"cmd/apidump":         {},
+	"cmd/boundcheck":      {},
 }
 
 // exempt names directories that contain Go files but are deliberately
@@ -120,7 +121,9 @@ func checkAll(root string, dirs []string, rules map[string][]perm, exempt map[st
 	var out []string
 	for _, dir := range dirs {
 		if reason, ok := exemptFor(dir, exempt); ok {
-			_ = reason
+			if strings.TrimSpace(reason) == "" {
+				out = append(out, fmt.Sprintf("%s: exemption without a reason — every exemption must say why", dir))
+			}
 			continue
 		}
 		allowed, ok := rules[dir]

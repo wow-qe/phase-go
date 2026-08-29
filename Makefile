@@ -48,6 +48,16 @@ binary-check: ## Fail when a compiled binary is tracked by git
 		if [ -n "$$bad" ]; then echo "tracked binaries:"; echo "$$bad"; exit 1; fi; \
 	fi
 
+.PHONY: release-rehearsal
+release-rehearsal: ## Rehearse all four consumer shapes against a worktree-rendered proxy
+	@v=$$(awk '/github.com\/wow-qe\/phase-go v/{print $$2; exit}' x/config/go.mod); \
+	proxy=$$(mktemp -d); \
+	bash scripts/build-local-proxy.sh "$$v" "$$proxy"; \
+	for mode in root config comparators all; do \
+		GOPROXY="file://$$proxy,https://proxy.golang.org" GONOSUMDB='github.com/wow-qe/*' \
+			sh scripts/consumer-smoke.sh $$mode $$v || exit 1; \
+	done
+
 .PHONY: boundary-check
 boundary-check: ## Enforce package-boundary and dependency-direction rules
 	$(GO) run ./cmd/boundcheck

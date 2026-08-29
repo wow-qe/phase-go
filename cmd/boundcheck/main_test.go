@@ -5,7 +5,9 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -141,5 +143,55 @@ func TestTestOnlyPermissionsDoNotReachProductionFiles(t *testing.T) {
 	got := checkAll(root, []string{"ext"}, map[string][]perm{"ext": {}}, nil)
 	if len(got) != 1 {
 		t.Fatalf("want exactly the production-file violation, got: %v", got)
+	}
+}
+
+func TestEmptyExemptionReasonIsRejected(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, filepath.Join(root, "quiet"), "a.go", "package quiet\n")
+	got := checkAll(root, []string{"quiet"}, map[string][]perm{},
+		map[string]string{"quiet": "  "})
+	if len(got) != 1 {
+		t.Fatalf("blank exemption reason accepted: %v", got)
+	}
+}
+
+func TestDiscoveryFindsTrackedPackagesAndFeedsTheGate(t *testing.T) {
+	// End-to-end through discovery itself, so a discovery regression can
+	// never leave the completeness check vacuously green: a real temporary
+	// git repository with nested tracked packages must be enumerated, and
+	// an unmapped tracked package must fail via that enumeration.
+	root := t.TempDir()
+	run := func(args ...string) {
+		t.Helper()
+		cmd := exec.Command("git", append([]string{"-C", root}, args...)...)
+		cmd.Env = append(os.Environ(),
+			"GIT_AUTHOR_NAME=t", "GIT_AUTHOR_EMAIL=t@t", "GIT_COMMITTER_NAME=t", "GIT_COMMITTER_EMAIL=t@t")
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+	run("init", "-q")
+	writeFixture(t, filepath.Join(root, "engine"), "a.go", "package engine\n")
+	writeFixture(t, filepath.Join(root, "engine", "deep"), "b.go", "package deep\n")
+	writeFixture(t, filepath.Join(root, "sneaky"), "c.go", "package sneaky\n")
+	run("add", ".")
+
+	dirs, err := discoverGoDirs(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"engine", "engine/deep", "sneaky"}
+	if len(dirs) != len(want) {
+		t.Fatalf("discovered %v, want %v", dirs, want)
+	}
+	for i := range want {
+		if dirs[i] != want[i] {
+			t.Fatalf("discovered %v, want %v", dirs, want)
+		}
+	}
+	got := checkAll(root, dirs, map[string][]perm{"engine": {}, "engine/deep": {}}, nil)
+	if len(got) != 1 || !strings.Contains(got[0], "sneaky") {
+		t.Fatalf("tracked unmapped package not caught through discovery: %v", got)
 	}
 }

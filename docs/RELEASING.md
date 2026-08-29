@@ -34,8 +34,10 @@ root version named in their `go.mod` files is not actually tagged, every
 The release workflow enforces #2 mechanically (it refuses to publish if
 any lockstep tag is missing or points elsewhere) and verifies each tag's
 signature against the committed keyring
-(`scripts/verify-release-tag.sh`); any primary key present in
-`.github/release-signing-key.asc` is an approved signer, which is what
+(`scripts/verify-release-tag.sh`); a signature is accepted when GnuPG verifies it
+successfully and its primary key is present in
+`.github/release-signing-key.asc` (signing subkeys map to their
+primary), which is what
 makes rotation work.
 
 ## Runbook
@@ -117,9 +119,10 @@ The workflow and this runbook now treat any published tag as frozen.
   GnuPG generated at key creation.
 - Rotation: generate a successor key, commit its public half, sign the
   next release with it, and keep the retiring public key in the file
-  until every tag it signed is superseded; the workflow accepts any
-  primary-key fingerprint present in the committed file
-  (`scripts/verify-release-tag.sh`).
+  until every tag it signed is superseded; the workflow accepts a
+  successfully verified signature whose primary key is present in the
+  committed file (`scripts/verify-release-tag.sh`); signing subkeys map
+  to their primary key.
 - Revocation or loss: publish the revocation certificate, rotate as
   above, and note the affected tag range in the changelog. Published
   tags are never re-signed or moved.

@@ -80,15 +80,7 @@ jobs:
       - name: Package boundaries hold
         run: make boundary-check
       - name: Release rehearsal (local proxy, all consumer shapes)
-        shell: bash
-        run: |
-          v="$(awk '/github.com\/wow-qe\/phase-go v/{print $2; exit}' x/config/go.mod)"
-          proxy="$(mktemp -d)"
-          bash scripts/build-local-proxy.sh "$v" "$proxy"
-          export GOPROXY="file://$proxy,https://proxy.golang.org" GONOSUMDB='github.com/wow-qe/*' GOPRIVATE='github.com/wow-qe/*' GOFLAGS=-mod=mod
-          for mode in root config comparators all; do
-            sh scripts/consumer-smoke.sh "$mode" "$v" || exit 1
-          done
+        run: make release-rehearsal
       - name: Lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:

@@ -13,8 +13,9 @@
 #   MODE:    root | config | comparators | all
 #   VERSION: the release version under test, e.g. v0.1.2
 #
-# Environment: GOPROXY/GOSUMDB may be overridden (a file:// proxy needs
-# GONOSUMDB/GOFLAGS=-mod=mod and GONOSUMCHECK as the caller decides).
+# Environment: GOPROXY/GOSUMDB/GONOSUMDB may be overridden by the caller
+# (a file:// proxy for unpublished versions needs GONOSUMDB for the
+# rehearsed module paths). Caller GOFLAGS are preserved.
 set -eu
 
 MODE="${1:?usage: consumer-smoke.sh root|config|comparators|all vX.Y.Z}"
@@ -26,7 +27,7 @@ trap 'rm -rf "$dir"' EXIT
 cd "$dir"
 export GOPATH="$dir/gopath"
 go mod init consumersmoke >/dev/null
-export GOFLAGS=-modcacherw
+export GOFLAGS="${GOFLAGS:-} -modcacherw"
 
 want_root="$VERSION"
 case "$MODE" in
