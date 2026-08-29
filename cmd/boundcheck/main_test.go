@@ -9,9 +9,9 @@ import (
 	"testing"
 )
 
-// The gate must discriminate: a compliant fixture passes, a violating
-// fixture is caught, and the stdlib heuristic neither blocks the standard
-// library nor waves through look-alike module paths.
+// The gate must discriminate: compliant trees pass; upward imports,
+// cross-extension imports, unlisted packages and boundary-leaking
+// prefixes are each caught by a dedicated negative fixture.
 
 func writeFixture(t *testing.T, dir, name, src string) {
 	t.Helper()
@@ -27,19 +27,82 @@ func TestCompliantFixturePasses(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, filepath.Join(root, "engine"), "a.go",
 		"package engine\n\nimport (\n\t\"fmt\"\n\n\t\"example.com/mod/result\"\n)\n\nvar _ = fmt.Sprint(result.X)\n")
-	got := checkAll(root, map[string][]string{"engine": {"example.com/mod/result"}})
+	got := checkAll(root, []string{"engine"}, map[string][]perm{"engine": {pkg("example.com/mod/result")}}, nil)
 	if len(got) != 0 {
 		t.Fatalf("compliant fixture flagged: %v", got)
 	}
 }
 
-func TestViolatingFixtureIsCaught(t *testing.T) {
+func TestUpwardImportIsCaught(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, filepath.Join(root, "result"), "a.go",
 		"package result\n\nimport \"example.com/mod/engine\"\n\nvar _ = engine.X\n")
-	got := checkAll(root, map[string][]string{"result": {}})
+	got := checkAll(root, []string{"result"}, map[string][]perm{"result": {}}, nil)
 	if len(got) != 1 {
 		t.Fatalf("upward import not caught: %v", got)
+	}
+}
+
+func TestUnlistedPackageFails(t *testing.T) {
+	// A new directory with Go files but no rule and no exemption must fail
+	// the gate itself — the rule table cannot silently fall behind the tree.
+	root := t.TempDir()
+	writeFixture(t, filepath.Join(root, "sneaky"), "a.go", "package sneaky\n")
+	got := checkAll(root, []string{"sneaky"}, map[string][]perm{}, nil)
+	if len(got) != 1 {
+		t.Fatalf("unlisted package not caught: %v", got)
+	}
+}
+
+func TestExemptedTreeIsSkippedWithReason(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, filepath.Join(root, "examples/demo"), "a.go",
+		"package demo\n\nimport \"anything.example.com/at/all\"\n\nvar _ = all.X\n")
+	got := checkAll(root, []string{"examples/demo"}, map[string][]perm{},
+		map[string]string{"examples/demo": "consumer example"})
+	if len(got) != 0 {
+		t.Fatalf("exempted tree flagged: %v", got)
+	}
+}
+
+func TestExactPermissionDoesNotLeakIntoSubpackages(t *testing.T) {
+	// An exact permission for the engine must NOT grant the engine's
+	// commands, extensions or internals: the audit's finding was that a
+	// blanket prefix made every rule broader than its documented direction.
+	allowed := []perm{pkg("example.com/mod")}
+	if !importAllowed("example.com/mod", allowed) {
+		t.Fatal("exact engine import blocked")
+	}
+	for _, p := range []string{
+		"example.com/mod/cmd/tool",
+		"example.com/mod/x/other",
+		"example.com/mod/internal/dag",
+	} {
+		if importAllowed(p, allowed) {
+			t.Fatalf("exact permission leaked into %q", p)
+		}
+	}
+	if !importAllowed("github.com/google/go-cmp/cmp", []perm{tree("github.com/google/go-cmp")}) {
+		t.Fatal("subtree permission blocked its own subpackage")
+	}
+}
+
+func TestCrossExtensionAndTestkitDirectionsAreClosed(t *testing.T) {
+	// Under the repository rule table: x/config must not reach x/comparators, and
+	// phasetest must not reach commands or extensions.
+	for imp, from := range map[string]string{
+		rootModule + "/x/comparators":    "x/config",
+		rootModule + "/x/config":         "x/comparators",
+		rootModule + "/cmd/snapdiff":     "phasetest",
+		rootModule + "/x/config/nothing": "phasetest",
+	} {
+		if importAllowed(imp, rules[from]) {
+			t.Fatalf("%s may import %q under the real rules — direction not closed", from, imp)
+		}
+	}
+	// Explicitly permitted command-side imports keep working.
+	if !importAllowed(rootModule, rules["cmd/snapdiff"]) {
+		t.Fatal("snapdiff's permitted engine import blocked")
 	}
 }
 
@@ -50,18 +113,33 @@ func TestStdlibAlwaysAllowedAndLookalikesAreNot(t *testing.T) {
 	if importAllowed("evil.example.com/encoding/json", nil) {
 		t.Fatal("dotted module path treated as stdlib")
 	}
-	if !importAllowed("example.com/mod/result/sub", []string{"example.com/mod/result"}) {
-		t.Fatal("subdirectory of an allowed prefix blocked")
-	}
-	if importAllowed("example.com/mod/resultx", []string{"example.com/mod/result"}) {
-		t.Fatal("prefix match leaked past the path boundary")
+	if importAllowed("example.com/mod/resultx", []perm{tree("example.com/mod/result")}) {
+		t.Fatal("subtree match leaked past the path boundary")
 	}
 }
 
 func TestRepositoryRulesHoldOnTheRealTree(t *testing.T) {
-	// The live gate over the actual repository: run from the repo root two
-	// levels up from this package.
-	if got := checkAll("../..", rules); len(got) != 0 {
+	dirs, err := discoverGoDirs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := checkAll("../..", dirs, rules, exempt); len(got) != 0 {
 		t.Fatalf("boundary violations in the repository: %v", got)
+	}
+}
+
+func TestTestOnlyPermissionsDoNotReachProductionFiles(t *testing.T) {
+	// A test-only grant applies to _test.go files alone: the same import
+	// from a production file stays a violation.
+	root := t.TempDir()
+	writeFixture(t, filepath.Join(root, "ext"), "prod.go",
+		"package ext\n\nimport _ \"example.com/mod/phasetest\"\n")
+	writeFixture(t, filepath.Join(root, "ext"), "ext_test.go",
+		"package ext\n\nimport _ \"example.com/mod/phasetest\"\n")
+	testOnly["ext"] = []perm{pkg("example.com/mod/phasetest")}
+	defer delete(testOnly, "ext")
+	got := checkAll(root, []string{"ext"}, map[string][]perm{"ext": {}}, nil)
+	if len(got) != 1 {
+		t.Fatalf("want exactly the production-file violation, got: %v", got)
 	}
 }

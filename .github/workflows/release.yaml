@@ -45,12 +45,7 @@ jobs:
           [[ "$(git cat-file -t "refs/tags/$GITHUB_REF_NAME")" == "tag" ]]
           case "${GITHUB_REF_NAME##*/}" in
           v0.1.0|v0.1.1) echo "grandfathered pre-signing tag" ;;
-          *)
-            gpg --import .github/release-signing-key.asc
-            fpr="$(gpg --with-colons --import-options show-only --import .github/release-signing-key.asc | awk -F: '/^fpr/{print $10; exit}')"
-            git verify-tag --raw "$GITHUB_REF_NAME" 2>&1 | grep -q "VALIDSIG $fpr" || {
-              echo "tag $GITHUB_REF_NAME is not signed by the approved release key $fpr"; exit 1; }
-            ;;
+          *) sh scripts/verify-release-tag.sh "$GITHUB_REF_NAME" .github/release-signing-key.asc ;;
           esac
       - name: Require release commit on main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
@@ -70,10 +65,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         # The tag build alone is not enough: the full multi-platform CI and
-        # security workflows for this exact commit must have succeeded, so a
-        # release can never publish a commit whose branch checks are red.
+        # BOTH security workflows for this exact commit must have succeeded —
+        # the v0.1.0 cycle proved CI and CodeQL can be green while a
+        # reachable vulnerability stays red, so Govulncheck is release
+        # blocking too.
         run: |
-          for wf in ci.yaml codeql.yaml; do
+          for wf in ci.yaml codeql.yaml govulncheck.yaml; do
             conclusion="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$wf"               --commit "$GITHUB_SHA" --json conclusion --jq 'map(select(.conclusion=="success")) | length')"
             [ "$conclusion" -ge 1 ] || { echo "workflow $wf has no successful run for $GITHUB_SHA"; exit 1; }
           done

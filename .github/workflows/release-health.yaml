@@ -36,7 +36,7 @@ jobs:
         id: latest
         shell: bash
         run: |
-          root_latest="$(go list -m -versions github.com/wow-qe/phase-go | tr ' ' '\n' | tail -1)"
+          root_latest="$(sh scripts/latest-release.sh github.com/wow-qe/phase-go)"
           [[ "$root_latest" == v* ]] || { echo "no published root version found"; exit 1; }
           echo "version=$root_latest" >> "$GITHUB_OUTPUT"
           for m in x/config x/comparators; do

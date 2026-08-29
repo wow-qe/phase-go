@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Copyright 2026 The Phase Contributors
 # SPDX-License-Identifier: MIT
 #
@@ -8,8 +8,8 @@
 # published modules at VERSION, so consumer-smoke.sh can rehearse a
 # release against a file:// proxy before any tag exists. The zips follow
 # module-zip layout (module@version/ prefix; nested modules excluded from
-# the root zip).
-set -eu
+# the root zip). Bash is required (read -d '' is not POSIX).
+set -euo pipefail
 
 VERSION="${1:?usage: build-local-proxy.sh vX.Y.Z outdir}"
 OUT="${2:?usage: build-local-proxy.sh vX.Y.Z outdir}"

@@ -32,9 +32,11 @@ root version named in their `go.mod` files is not actually tagged, every
 2. All three tags must point at that same commit.
 
 The release workflow enforces #2 mechanically (it refuses to publish if
-any lockstep tag is missing or points elsewhere) and requires annotated
-tags. Signature verification is a manual runbook step until signer keys
-are provisioned in CI.
+any lockstep tag is missing or points elsewhere) and verifies each tag's
+signature against the committed keyring
+(`scripts/verify-release-tag.sh`); any primary key present in
+`.github/release-signing-key.asc` is an approved signer, which is what
+makes rotation work.
 
 ## Runbook
 
@@ -115,8 +117,9 @@ The workflow and this runbook now treat any published tag as frozen.
   GnuPG generated at key creation.
 - Rotation: generate a successor key, commit its public half, sign the
   next release with it, and keep the retiring public key in the file
-  until every tag it signed is superseded; the workflow accepts the keys
-  present in the committed file.
+  until every tag it signed is superseded; the workflow accepts any
+  primary-key fingerprint present in the committed file
+  (`scripts/verify-release-tag.sh`).
 - Revocation or loss: publish the revocation certificate, rotate as
   above, and note the affected tag range in the changelog. Published
   tags are never re-signed or moved.

@@ -4,16 +4,50 @@ All notable changes to this project are documented here. The format follows
 Keep a Changelog; versions follow SemVer (pre-1.0: breaking changes only at
 minor bumps, each with a migration note).
 
-## [Unreleased] — v0.1.2 candidate
+## [0.1.2] — 2026-08-29
 
-Maintenance only: release correctness, documentation, tests and
-operational controls. No feature or exported-API changes (the API
-baseline gate pins the surface).
+Maintenance, lockstep across the three modules: release correctness and
+operational controls only. No feature or exported-API changes (the API
+baseline gate pins the surface). Contains exactly the changes made after
+the v0.1.1 tag.
 
 ### Fixed
 - `x/config` and `x/comparators` now require the root release they ship
-  with (previously they named the prior release; consumers resolving an
-  extension alone received the older root).
+  with. In v0.1.1 they named root `v0.1.0`, so a consumer resolving an
+  extension alone received the older root; every consumer shape now
+  resolves the release's own root version.
+
+### Added (operational)
+- Consumer-boundary smoke tooling: `scripts/consumer-smoke.sh` exercises
+  root, each extension alone, and all modules together as replace-free
+  consumers and asserts the resolved module graph;
+  `scripts/build-local-proxy.sh` renders the worktree as module-proxy
+  artifacts so a release is rehearsed before any tag exists.
+- Release tags are signed with a dedicated maintainer Ed25519 key and
+  the release workflow verifies each tag's signature against the
+  committed public keyring (v0.1.0 and v0.1.1 are grandfathered as
+  pre-key annotated tags); key management is documented in the runbook.
+- The release workflow requires green CI, CodeQL and Govulncheck runs
+  for the exact release commit.
+- A scheduled release-health canary resolves the latest published
+  release, verifies lockstep completeness, and runs every consumer
+  shape through the public proxy and checksum database.
+- A package-boundary gate (`cmd/boundcheck`) enforces dependency
+  direction with discriminating fixtures.
+- Runbook corrections: the changelog is finalized before the candidate
+  SHA is declared.
+
+## [0.1.1] — 2026-08-29
+
+Security and hardening release, lockstep across the three modules.
+
+### Security
+- Go floor raised to 1.25.8 in every module: Go 1.25.0–1.25.7 carry
+  GO-2026-4602 (`os` package), reachable from this repository. The floor
+  policy: the minimum patch release tracks the oldest supported version
+  without known reachable standard-library vulnerabilities.
+
+### Fixed
 - Construction refuses empty suites (`empty_suite`), nil and typed-nil
   phases (`nil_phase`), empty case IDs, and negative
   `MaxObservationsPerCase`.
@@ -26,30 +60,18 @@ baseline gate pins the surface).
   another's payload or retained session state.
 
 ### Added (operational)
-- Consumer-boundary smoke tooling (`scripts/consumer-smoke.sh`, local
-  proxy rehearsal) with module-graph assertions per consumer shape.
 - Exported-API baseline gate, comment-standard gate, tracked-binary
-  gate, fuzz targets and seed corpora, goroutine-leak test, baseline
-  benchmarks.
-- Release workflow requires green CI and CodeQL on the release commit;
-  tag-immutability policy and incident record; determinism and
-  operating-envelope documentation; error-taxonomy statement on
-  `FrameworkError`.
-
-## [0.1.1] — 2026-08-29
-
-Security patch release, lockstep across the three modules.
-
-### Security
-- Go floor raised to 1.25.8 in every module: Go 1.25.0–1.25.7 carry
-  GO-2026-4602 (`os` package), reachable from this repository. The floor
-  policy: the minimum patch release tracks the oldest supported version
-  without known reachable standard-library vulnerabilities.
+  gate, fuzz targets with seed corpora, a goroutine-leak test and
+  baseline benchmarks.
+- The release workflow began requiring green CI and CodeQL on the
+  release commit; tag-immutability policy with incident record;
+  determinism and operating-envelope documentation; the two-fate
+  error-taxonomy statement on `FrameworkError`.
 
 ### Known deviation (recorded at release time)
 - The extension modules' `go.mod` files named root `v0.1.0`; fixed in
-  the next release. Consumers requesting all modules together resolved
-  correctly; extension-only consumers received root `v0.1.0`.
+  v0.1.2. Consumers requesting all modules together resolved correctly;
+  extension-only consumers received root `v0.1.0`.
 
 ## [0.1.0] — 2026-08-28
 
