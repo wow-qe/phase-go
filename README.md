@@ -25,8 +25,10 @@ not.
 
 ## Requirements
 
-- Go 1.25 or newer for the library itself (CI tests 1.25 and 1.26; newer
-  releases are expected to work but are not gated until CI covers them)
+- Go 1.25.8 or newer for the library itself (the floor tracks the oldest
+  patch release without known stdlib vulnerabilities reachable from this
+  code; CI tests the 1.25 and 1.26 series — newer releases are expected
+  to work but are not gated until CI covers them)
 - GNU Make (optional, but recommended for consistent local commands)
 - For the extended local checks: `golangci-lint`, `govulncheck`, and
   `gitleaks`. These tools analyze Go source and must be **built with (or

@@ -1,6 +1,6 @@
 module github.com/wow-qe/phase-go/x/config
 
-go 1.25.0
+go 1.25.8
 
 require (
 	// The real release version a downstream consumer resolves; the
