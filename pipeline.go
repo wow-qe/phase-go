@@ -85,5 +85,17 @@ type Pipeline struct {
 // NewPipeline collects the consumer's phases. Validation happens at
 // NewRunner, where the configuration needed to judge the pipeline is present.
 func NewPipeline(phases ...Interface) *Pipeline {
-	return &Pipeline{phases: phases}
+	return &Pipeline{phases: append([]Interface(nil), phases...)}
+}
+
+// snapshot returns a pipeline the runner owns: phase and group slices are
+// copied so later caller mutations cannot reach a constructed runner.
+func (p *Pipeline) snapshot() *Pipeline {
+	out := &Pipeline{phases: append([]Interface(nil), p.phases...)}
+	for _, g := range p.groups {
+		g.Members = append([]ID(nil), g.Members...)
+		g.Produces = append([]KeyID(nil), g.Produces...)
+		out.groups = append(out.groups, g)
+	}
+	return out
 }

@@ -175,7 +175,17 @@ func (r *Run) bound(id ID, t Timing, produces []KeyID, restrict bool) *Run {
 func (r *Run) Case() Case { return r.c }
 
 // Scope is the identity the framework allocated for this run.
-func (r *Run) Scope() Scope { return r.scope }
+func (r *Run) Scope() Scope {
+	s := r.scope
+	if s.Keys != nil { // detached: mutating the returned map changes nothing
+		keys := make(map[string]string, len(s.Keys))
+		for k, v := range s.Keys {
+			keys[k] = v
+		}
+		s.Keys = keys
+	}
+	return s
+}
 
 // now and sleep delegate to the shared core so every view of one run tells
 // the same time.

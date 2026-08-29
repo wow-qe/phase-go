@@ -300,7 +300,7 @@ func TestEmptySuiteIsRefused(t *testing.T) {
 		t.Fatal("nil case slice accepted")
 	}
 	_, err := r.Start(context.Background(), []Case{})
-	wantCode(t, err, EmptySuite)
+	_ = wantCode(t, err, EmptySuite)
 }
 
 func TestNilPhaseIsRefusedAtConstruction(t *testing.T) {
@@ -308,11 +308,11 @@ func TestNilPhaseIsRefusedAtConstruction(t *testing.T) {
 	// plain nil and a typed-nil pointer both dereference inside the engine
 	// otherwise.
 	_, err := NewRunner(NewPipeline(nil), Config{Defaults: validTiming()})
-	wantCode(t, err, NilPhase)
+	_ = wantCode(t, err, NilPhase)
 
 	var typed *stubPhase
 	_, err = NewRunner(NewPipeline(passingPhase("a", nil), typed), Config{Defaults: validTiming()})
-	wantCode(t, err, NilPhase)
+	_ = wantCode(t, err, NilPhase)
 }
 
 func TestEmptyCaseIDIsRefusedByPreflight(t *testing.T) {
@@ -320,7 +320,7 @@ func TestEmptyCaseIDIsRefusedByPreflight(t *testing.T) {
 	// already refuses this, and the core boundary must match it.
 	r := mustRunner(t, Config{Defaults: validTiming()}, passingPhase("submit", nil))
 	err := r.Preflight([]Case{&stubCase{id: ""}})
-	wantCode(t, err, CaseIDMissing)
+	_ = wantCode(t, err, CaseIDMissing)
 }
 
 func TestNegativeObservationCapIsRefused(t *testing.T) {
@@ -328,7 +328,7 @@ func TestNegativeObservationCapIsRefused(t *testing.T) {
 	// and silently treating it as unlimited would hide it.
 	cfg := Config{Defaults: validTiming(), MaxObservationsPerCase: -1}
 	_, err := NewRunner(NewPipeline(passingPhase("a", nil)), cfg)
-	wantCode(t, err, TimingInvalid)
+	_ = wantCode(t, err, TimingInvalid)
 }
 
 func TestExecutionUsesThePreflightScopeSnapshot(t *testing.T) {

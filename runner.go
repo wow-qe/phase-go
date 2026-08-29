@@ -91,6 +91,11 @@ func isNilPhase(ph Interface) bool {
 }
 
 func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error) {
+	// The runner owns snapshots of everything that defines its behavior:
+	// mutating the caller's Config, phase slice or Group values after
+	// construction must not change an already-constructed runner.
+	cfg = cloneConfig(cfg)
+	p = p.snapshot()
 	r := &Runner{
 		byID:     make(map[ID]Interface, len(p.phases)),
 		resolved: make(map[ID]Timing, len(p.phases)),
@@ -374,7 +379,15 @@ func (r *Runner) emitEvent(ev Event) {
 	defer r.progressMu.Unlock()
 	for _, obs := range r.eventObservers {
 		obs := obs
-		if err := contain("event observer callback", func() error { obs(ev); return nil }); err != nil {
+		// Each observer receives an independent payload: a CaseFinished
+		// report is re-cloned per delivery, so one observer mutating its
+		// copy can affect neither its peers nor the retained session.
+		deliver := ev
+		if cf, ok := ev.(CaseFinishedEvent); ok {
+			cf.Report = cf.Report.clone()
+			deliver = cf
+		}
+		if err := contain("event observer callback", func() error { obs(deliver); return nil }); err != nil {
 			r.observerErrs = append(r.observerErrs, err)
 		}
 	}
@@ -1175,4 +1188,31 @@ func jsonSafe(v any) any {
 // sortIDs is a shared helper for deterministic iteration over ID-keyed maps.
 func sortIDs(ids []ID) {
 	sort.Slice(ids, func(i, j int) bool { return ids[i] < ids[j] })
+}
+
+// cloneConfig deep-copies every mutable field of a Config so the runner's
+// behavior is fixed at construction.
+func cloneConfig(cfg Config) Config {
+	if cfg.Phases != nil {
+		phases := make(map[ID]Settings, len(cfg.Phases))
+		for id, st := range cfg.Phases {
+			st.DependsOn = append([]ID(nil), st.DependsOn...)
+			if st.Enabled != nil {
+				e := *st.Enabled
+				st.Enabled = &e
+			}
+			if st.Sub != nil {
+				sub := make(map[ID]Settings, len(st.Sub))
+				for k, v := range st.Sub {
+					sub[k] = v
+				}
+				st.Sub = sub
+			}
+			phases[id] = st
+		}
+		cfg.Phases = phases
+	}
+	cfg.RedactKeys = append([]string(nil), cfg.RedactKeys...)
+	cfg.RedactPatterns = append([]string(nil), cfg.RedactPatterns...)
+	return cfg
 }

@@ -4,6 +4,7 @@
 package phase
 
 import (
+	"encoding/json"
 	"regexp"
 	"time"
 )
@@ -46,21 +47,63 @@ func (s *Session) Cases() []CaseReport {
 	return out
 }
 
-// clone deep-copies the evidence slices: a shallow copy would share backing
-// storage, so a consumer redacting or formatting a returned Report could
+// clone deep-copies the report, including evidence values nested inside
+// any-typed fields: a shallow copy would share backing storage, so a
+// consumer (or an event observer) mutating a returned value could
 // silently corrupt the Session for every later Report() call.
 func (c CaseReport) clone() CaseReport {
 	c.Phases = append([]PhaseOutcome(nil), c.Phases...)
 	c.Groups = append([]GroupOutcome(nil), c.Groups...)
+	for gi := range c.Groups {
+		c.Groups[gi].Members = append([]ID(nil), c.Groups[gi].Members...)
+	}
 	if c.DependencyFailure != nil {
 		df := *c.DependencyFailure
 		df.Acceptable = append([]Status(nil), df.Acceptable...)
 		c.DependencyFailure = &df
 	}
 	c.Results = append([]AttributedResult(nil), c.Results...)
+	for ri := range c.Results {
+		v := &c.Results[ri].Result
+		v.Expected = detachAny(v.Expected)
+		v.Actual = detachAny(v.Actual)
+	}
 	c.Observations = append([]Observation(nil), c.Observations...)
+	for oi := range c.Observations {
+		c.Observations[oi].Value = detachAny(c.Observations[oi].Value)
+	}
 	c.Errors = append([]AttributedError(nil), c.Errors...)
 	return c
+}
+
+// detachAny returns a structurally independent copy of an evidence value,
+// normalised through JSON exactly as redaction and the report writer are.
+// The framework's own structured evidence types keep their Go type across
+// the copy. A value that cannot be marshalled cannot be detached, emitted
+// or verified clean, so it is replaced whole with the same marker
+// redaction uses — never a rendering of its contents.
+func detachAny(v any) any {
+	switch tv := v.(type) {
+	case nil, string, bool, int, int64, float64:
+		return v // immutable scalars need no copy
+	case TranscriptEntry:
+		tv.Request = detachAny(tv.Request)
+		tv.Response = detachAny(tv.Response)
+		return tv
+	case ToleratedAttempt:
+		tv.Expected = detachAny(tv.Expected)
+		tv.Actual = detachAny(tv.Actual)
+		return tv
+	}
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return redacted + " (value could not be inspected)"
+	}
+	var out any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return redacted + " (value could not be inspected)"
+	}
+	return out
 }
 
 // PhaseOutcome is one phase's disposition for one case. Every phase in the
