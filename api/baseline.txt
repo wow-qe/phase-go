@@ -1,0 +1,456 @@
+. phase: const Active CaseStatus
+. phase: const Blocked
+. phase: const CaseDependencyCycle LoadCode
+. phase: const CaseDependencyUnknown LoadCode
+. phase: const CaseFinished
+. phase: const CaseIDMissing LoadCode
+. phase: const CaseStarted
+. phase: const DeclinedByCase DeclineSource
+. phase: const DeclinedByCondition DeclineSource
+. phase: const DeclinedByConfig DeclineSource
+. phase: const DeclinedByDependency DeclineSource
+. phase: const DeclinedByGroupSetup DeclineSource
+. phase: const DeclinedByPhase DeclineSource
+. phase: const DependencyCycle LoadCode
+. phase: const Disabled
+. phase: const Draft
+. phase: const DuplicateCaseID LoadCode
+. phase: const DuplicateGroupID LoadCode
+. phase: const DuplicateKeyProducer LoadCode
+. phase: const DuplicatePhaseID LoadCode
+. phase: const EmptyGroup LoadCode
+. phase: const EmptySuite LoadCode
+. phase: const Errored
+. phase: const ExclusiveWithoutReason LoadCode
+. phase: const Failed
+. phase: const FixtureNil LoadCode
+. phase: const FixtureSetupFinished
+. phase: const FixtureSetupStarted
+. phase: const FixtureTeardownFinished
+. phase: const FixtureTeardownStarted
+. phase: const Flaked
+. phase: const GroupIDReservedCharacter LoadCode
+. phase: const GroupMemberDuplicate LoadCode
+. phase: const GroupSetupFinished
+. phase: const GroupSetupStarted
+. phase: const GroupTeardownFinished
+. phase: const GroupTeardownStarted
+. phase: const KeyNeverProduced LoadCode
+. phase: const NilCase LoadCode
+. phase: const NilPhase LoadCode
+. phase: const NotApplicable
+. phase: const Passed Status
+. phase: const PhaseFinished
+. phase: const PhaseStarted
+. phase: const PlanConditional PlanDisposition
+. phase: const PlanDeclined PlanDisposition
+. phase: const PlanWillRun PlanDisposition
+. phase: const Quarantined
+. phase: const RedactPatternInvalid LoadCode
+. phase: const RetryAttempt
+. phase: const SchemaVersion
+. phase: const ScopeCollision LoadCode
+. phase: const SessionFinished
+. phase: const SessionStarted EventKind
+. phase: const SettingsSubRemoved LoadCode
+. phase: const SkipWithoutReason LoadCode
+. phase: const Skipped
+. phase: const SourceFixture SourceKind
+. phase: const SourceGroupSetup SourceKind
+. phase: const SourceGroupTeardown SourceKind
+. phase: const SourcePhase SourceKind
+. phase: const SourceSession SourceKind
+. phase: const StageAfter Stage
+. phase: const StageBefore Stage
+. phase: const StageCondition Stage
+. phase: const StatusUnparsable LoadCode
+. phase: const TimingInvalid LoadCode
+. phase: const UnknownConfigKey LoadCode
+. phase: const UnknownDependency LoadCode
+. phase: const UnknownFixture LoadCode
+. phase: const UnknownGroupMember LoadCode
+. phase: const UnknownPhaseInConfig LoadCode
+. phase: field Applicability.Applies bool
+. phase: field Applicability.Reason string
+. phase: field AttributedError.Err string
+. phase: field AttributedError.Phase ID
+. phase: field AttributedError.Source EvidenceSource
+. phase: field AttributedResult.Phase ID
+. phase: field AttributedResult.Result ResultView
+. phase: field AttributedResult.Source EvidenceSource
+. phase: field CaseFinishedEvent.Report CaseReport
+. phase: field CasePlan.DependsOn []CaseRequirement
+. phase: field CasePlan.Exclusive bool
+. phase: field CasePlan.ID string
+. phase: field CasePlan.Phases []PhasePlan
+. phase: field CasePlan.Reason string
+. phase: field CasePlan.Skipped bool
+. phase: field CaseReport.CaseID string
+. phase: field CaseReport.Correlation string
+. phase: field CaseReport.Curtailed bool
+. phase: field CaseReport.DependencyFailure *DependencyFailure
+. phase: field CaseReport.Errors []AttributedError
+. phase: field CaseReport.FailedIn ID
+. phase: field CaseReport.Finished time.Time
+. phase: field CaseReport.Groups []GroupOutcome
+. phase: field CaseReport.Observations []Observation
+. phase: field CaseReport.Phases []PhaseOutcome
+. phase: field CaseReport.Reason string
+. phase: field CaseReport.Results []AttributedResult
+. phase: field CaseReport.Started time.Time
+. phase: field CaseReport.Status Status
+. phase: field CaseRequirement.Acceptable []Status
+. phase: field CaseRequirement.CaseID string
+. phase: field CaseStartedEvent.DeclarationIndex int
+. phase: field Config.Defaults Timing
+. phase: field Config.MaxCaseConcurrency int
+. phase: field Config.MaxObservationsPerCase int
+. phase: field Config.MaxPhaseConcurrency int
+. phase: field Config.Phases map[ID]Settings
+. phase: field Config.RedactKeys []string
+. phase: field Config.RedactPatterns []string
+. phase: field DependencyFailure.Acceptable []Status
+. phase: field DependencyFailure.Actual Status
+. phase: field DependencyFailure.CaseID string
+. phase: field EvidenceSource.ID ID
+. phase: field EvidenceSource.Kind SourceKind
+. phase: field FixtureEvent.Err string
+. phase: field FixtureEvent.Index int
+. phase: field FrameworkError.Detail string
+. phase: field FrameworkError.Invariant string
+. phase: field Func.Applies func(Case, Config) Applicability
+. phase: field Func.Deps []ID
+. phase: field Func.Do func(context.Context, *Run) error
+. phase: field Func.Gets []KeyID
+. phase: field Func.PhaseID ID
+. phase: field Func.Puts []KeyID
+. phase: field Group.ID ID
+. phase: field Group.Lifecycle Fixture
+. phase: field Group.Members []ID
+. phase: field Group.Produces []KeyID
+. phase: field GroupEvent.Err string
+. phase: field GroupEvent.GroupID ID
+. phase: field GroupOutcome.GroupID ID
+. phase: field GroupOutcome.Members []ID
+. phase: field GroupOutcome.Reason string
+. phase: field GroupOutcome.Recorded int
+. phase: field GroupOutcome.Status Status
+. phase: field LoadError.Code LoadCode
+. phase: field LoadError.Detail string
+. phase: field LoadError.Subject string
+. phase: field Observation.At time.Time
+. phase: field Observation.Name string
+. phase: field Observation.Phase ID
+. phase: field Observation.Source EvidenceSource
+. phase: field Observation.Value any
+. phase: field PhaseFinishedEvent.Outcome PhaseOutcome
+. phase: field PhaseOutcome.AttemptsUsed int
+. phase: field PhaseOutcome.DeclineSource DeclineSource
+. phase: field PhaseOutcome.Failing int
+. phase: field PhaseOutcome.ID ID
+. phase: field PhaseOutcome.Reason string
+. phase: field PhaseOutcome.Results int
+. phase: field PhaseOutcome.Stage Stage
+. phase: field PhaseOutcome.Status Status
+. phase: field PhasePlan.DeclineSource DeclineSource
+. phase: field PhasePlan.Disposition PlanDisposition
+. phase: field PhasePlan.Group ID
+. phase: field PhasePlan.ID ID
+. phase: field PhasePlan.Level int
+. phase: field PhasePlan.Reason string
+. phase: field PhasePlan.Timing Timing
+. phase: field PhaseStartedEvent.Phase ID
+. phase: field PhaseStartedEvent.Reached bool
+. phase: field PhaseStartedEvent.Timing Timing
+. phase: field Plan.CaseOrder []string
+. phase: field Plan.Cases []CasePlan
+. phase: field PriorEvidenceSummary.Errored bool
+. phase: field PriorEvidenceSummary.Failing int
+. phase: field PriorEvidenceSummary.Recorded int
+. phase: field ProgressEvent.CaseID string
+. phase: field ProgressEvent.Phase ID
+. phase: field ProgressEvent.Stage string
+. phase: field ProgressEvent.Status Status
+. phase: field Report.Cases []CaseReport
+. phase: field Report.Diagnostics []string
+. phase: field Report.NotVerified []string
+. phase: field Report.Schema string
+. phase: field Report.Session SessionInfo
+. phase: field Report.Summary Summary
+. phase: field ResultView.Actual any
+. phase: field ResultView.Comparisons int
+. phase: field ResultView.Entity EntityRef
+. phase: field ResultView.Expected any
+. phase: field ResultView.Name string
+. phase: field ResultView.Passed bool
+. phase: field ResultView.Reason string
+. phase: field RetryAttemptEvent.Attempt int
+. phase: field RetryAttemptEvent.LastErr string
+. phase: field RetryAttemptEvent.Of int
+. phase: field RetryAttemptEvent.Phase ID
+. phase: field RetryAttemptEvent.Retry string
+. phase: field Scope.CaseID string
+. phase: field Scope.Correlation string
+. phase: field Scope.Keys map[string]string
+. phase: field Scope.RunID string
+. phase: field SessionFinishedEvent.SessionID string
+. phase: field SessionInfo.Finished time.Time
+. phase: field SessionInfo.ID string
+. phase: field SessionInfo.Started time.Time
+. phase: field SessionStartedEvent.CaseCount int
+. phase: field SessionStartedEvent.SessionID string
+. phase: field Settings.DependsOn []ID
+. phase: field Settings.Enabled *bool
+. phase: field Settings.Optional bool
+. phase: field Settings.Sub map[ID]Settings
+. phase: field Settings.Timing Timing
+. phase: field Summary.Disabled int
+. phase: field Summary.Errored int
+. phase: field Summary.Failed int
+. phase: field Summary.Flaked int
+. phase: field Summary.NotApplicable int
+. phase: field Summary.Passed int
+. phase: field Summary.Skipped int
+. phase: field Summary.Total int
+. phase: field Timing.Attempts int
+. phase: field Timing.Interval time.Duration
+. phase: field Timing.SettleDelay time.Duration
+. phase: field Timing.Timeout time.Duration
+. phase: field ToleratedAttempt.Actual any
+. phase: field ToleratedAttempt.Attempt int
+. phase: field ToleratedAttempt.Expected any
+. phase: field ToleratedAttempt.Of int
+. phase: field ToleratedAttempt.Reason string
+. phase: field TranscriptEntry.Op string
+. phase: field TranscriptEntry.Request any
+. phase: field TranscriptEntry.Response any
+. phase: func (*FrameworkError) Error() string
+. phase: func (*LoadError) Error() string
+. phase: func (*Pipeline) Group(g Group) *Pipeline
+. phase: func (*Report) ExitCode() int
+. phase: func (*Report) Redact(keys ...string)
+. phase: func (*Report) RedactMatching(re *regexp.Regexp)
+. phase: func (*Report) Verify() error
+. phase: func (*Report) WriteJSON(w io.Writer) error
+. phase: func (*Run) Case() Case
+. phase: func (*Run) Fail(err error)
+. phase: func (*Run) Observe(name string, value any)
+. phase: func (*Run) PriorEvidence(id ID) (PriorEvidenceSummary, error)
+. phase: func (*Run) Record(res result.Result)
+. phase: func (*Run) Scope() Scope
+. phase: func (*Run) Transcribe(op string, request, response any)
+. phase: func (*Runner) Explain(cases []Case) (*Plan, error)
+. phase: func (*Runner) Preflight(cases []Case) error
+. phase: func (*Runner) Start(ctx context.Context, cases []Case) (*Session, error)
+. phase: func (*Session) Cases() []CaseReport
+. phase: func (*Session) Finished() time.Time
+. phase: func (*Session) ID() string
+. phase: func (*Session) ObserverErrors() []error
+. phase: func (*Session) Report() *Report
+. phase: func (*Session) Started() time.Time
+. phase: func (CaseStatus) String() string
+. phase: func (EventKind) String() string
+. phase: func (Func) AppliesTo(c Case, cfg Config) Applicability
+. phase: func (Func) DependsOn() []ID
+. phase: func (Func) ID() ID
+. phase: func (Func) Produces() []KeyID
+. phase: func (Func) Requires() []KeyID
+. phase: func (Func) Run(ctx context.Context, r *Run) error
+. phase: func (Key[T]) ID() KeyID
+. phase: func (Status) MarshalJSON() ([]byte, error)
+. phase: func (Status) String() string
+. phase: func Applies() Applicability
+. phase: func Declare[T any](name string) Key[T]
+. phase: func ExecutePhaseForTesting(ctx context.Context, ph Interface, r *Run) PhaseOutcome
+. phase: func Get[T any](r *Run, k Key[T]) (T, error)
+. phase: func InterceptRecords(r *Run, f func(result.Result) result.Result)
+. phase: func Keys(ks ...keyed) []KeyID
+. phase: func LogProgress(w io.Writer) func(ProgressEvent)
+. phase: func MergeReports(reports ...*Report) (*Report, error)
+. phase: func NewPipeline(phases ...Interface) *Pipeline
+. phase: func NewRunForTesting(c Case, opts ...RunOption) *Run
+. phase: func NewRunner(p *Pipeline, cfg Config, opts ...RunnerOption) (*Runner, error)
+. phase: func ParseStatus(s string) (CaseStatus, error)
+. phase: func Put[T any](r *Run, k Key[T], v T)
+. phase: func Ref(id string) EntityRef
+. phase: func Require[T any](r Recorder, v T, err error) (T, bool)
+. phase: func SelectByTags(cases []Case, expr string) ([]Case, error)
+. phase: func Skip(reason string) Applicability
+. phase: func Tolerate(ctx context.Context, r *Run, reason string, attempts int, check func(context.Context) result.Result) (result.Result, error)
+. phase: func WaitUntil[T any](ctx context.Context, r *Run, cond func(context.Context) (T, bool, error)) (T, error)
+. phase: func WithCaseObserver(f func(CaseReport)) RunnerOption
+. phase: func WithClock(now func() time.Time) RunOption
+. phase: func WithObserver(f func(Event)) RunnerOption
+. phase: func WithPhase(id ID, t Timing) RunOption
+. phase: func WithProgress(f func(ProgressEvent)) RunnerOption
+. phase: func WithScope(s Scope) RunOption
+. phase: func WithScopeAllocator(a ScopeAllocator) RunnerOption
+. phase: func WithSleeper(sleep func(context.Context, time.Duration) error) RunOption
+. phase: method AfterHook.After(context.Context, *Run, PhaseOutcome) error
+. phase: method BeforeHook.Before(context.Context, *Run) error
+. phase: method Case.Exclusive() (bool, string)
+. phase: method Case.Fixtures() []Fixture
+. phase: method Case.ID() string
+. phase: method Case.Selects(ID) (bool, string)
+. phase: method Case.Status() CaseStatus
+. phase: method Case.Timing(ID) (Timing, bool)
+. phase: method CaseDependency.DependsOnCases() []CaseRequirement
+. phase: method Event.At() time.Time
+. phase: method Event.CaseID() string
+. phase: method Event.Kind() EventKind
+. phase: method Fixture.Setup(ctx context.Context, r *Run) error
+. phase: method Fixture.Teardown(ctx context.Context, r *Run) error
+. phase: method Interface.AppliesTo(Case, Config) Applicability
+. phase: method Interface.DependsOn() []ID
+. phase: method Interface.ID() ID
+. phase: method Interface.Produces() []KeyID
+. phase: method Interface.Requires() []KeyID
+. phase: method Interface.Run(context.Context, *Run) error
+. phase: method Recorder.Fail(error)
+. phase: method Recorder.Observe(name string, value any)
+. phase: method Recorder.Record(result.Result)
+. phase: method ScopeAllocator.Allocate(c Case) (Scope, error)
+. phase: method Tagged.Tags() []string
+. phase: method When.When(context.Context, *Run) (ok bool, reason string, err error)
+. phase: type AfterHook interface
+. phase: type Applicability struct
+. phase: type AttributedError struct
+. phase: type AttributedResult struct
+. phase: type BeforeHook interface
+. phase: type Case interface
+. phase: type CaseDependency interface
+. phase: type CaseFinishedEvent struct
+. phase: type CasePlan struct
+. phase: type CaseReport struct
+. phase: type CaseRequirement struct
+. phase: type CaseStartedEvent struct
+. phase: type CaseStatus int
+. phase: type Config struct
+. phase: type DeclineSource string
+. phase: type DependencyFailure struct
+. phase: type EntityRef result.EntityRef
+. phase: type Event interface
+. phase: type EventKind int
+. phase: type EvidenceSource struct
+. phase: type Fixture interface
+. phase: type FixtureEvent struct
+. phase: type FrameworkError struct
+. phase: type Func struct
+. phase: type Group struct
+. phase: type GroupEvent struct
+. phase: type GroupOutcome struct
+. phase: type ID string
+. phase: type Interface interface
+. phase: type Key struct
+. phase: type KeyID string
+. phase: type LoadCode string
+. phase: type LoadError struct
+. phase: type Observation struct
+. phase: type PhaseFinishedEvent struct
+. phase: type PhaseOutcome struct
+. phase: type PhasePlan struct
+. phase: type PhaseStartedEvent struct
+. phase: type Pipeline struct
+. phase: type Plan struct
+. phase: type PlanDisposition string
+. phase: type PriorEvidenceSummary struct
+. phase: type ProgressEvent struct
+. phase: type Recorder interface
+. phase: type Report struct
+. phase: type ResultView struct
+. phase: type RetryAttemptEvent struct
+. phase: type Run struct
+. phase: type RunOption func(*Run)
+. phase: type Runner struct
+. phase: type RunnerOption func(*Runner)
+. phase: type Scope struct
+. phase: type ScopeAllocator interface
+. phase: type Session struct
+. phase: type SessionFinishedEvent struct
+. phase: type SessionInfo struct
+. phase: type SessionStartedEvent struct
+. phase: type Settings struct
+. phase: type SourceKind string
+. phase: type Stage string
+. phase: type Status int
+. phase: type Summary struct
+. phase: type Tagged interface
+. phase: type Timing struct
+. phase: type ToleratedAttempt struct
+. phase: type TranscriptEntry struct
+. phase: type When interface
+. phase: var ErrBudgetExhausted
+. phase: var ErrKeyNotProduced
+. phase: var ErrNoMatch
+phasetest phasetest: func (*Clock) Advance(d time.Duration)
+phasetest phasetest: func (*Clock) Now() time.Time
+phasetest phasetest: func (*Clock) Sleeper() func(context.Context, time.Duration) error
+phasetest phasetest: func (*EventRecorder) Events() []phase.Event
+phasetest phasetest: func (*EventRecorder) Kinds() []phase.EventKind
+phasetest phasetest: func (*SpyRecorder) Errors() []error
+phasetest phasetest: func (*SpyRecorder) Fail(err error)
+phasetest phasetest: func (*SpyRecorder) FailedResults() []result.Result
+phasetest phasetest: func (*SpyRecorder) Observations() []phase.Observation
+phasetest phasetest: func (*SpyRecorder) Observe(name string, value any)
+phasetest phasetest: func (*SpyRecorder) Record(r result.Result)
+phasetest phasetest: func (*SpyRecorder) Results() []result.Result
+phasetest phasetest: func AlwaysPass(inner phase.Interface) phase.Interface
+phasetest phasetest: func ConformanceCase(t testing.TB, c phase.Case)
+phasetest phasetest: func ConformanceGroup(t testing.TB, g phase.Group)
+phasetest phasetest: func Gutted(inner phase.Interface) phase.Interface
+phasetest phasetest: func InvokePhase(ctx context.Context, ph phase.Interface, run *phase.Run) phase.PhaseOutcome
+phasetest phasetest: func NewClock(start time.Time) *Clock
+phasetest phasetest: func RecordEvents() (*EventRecorder, phase.RunnerOption)
+phasetest phasetest: func ReportCaseOutcome(tb testing.TB, cr phase.CaseReport)
+phasetest phasetest: func RunAsSubtests(t *testing.T, s *phase.Session)
+phasetest phasetest: func RunFor(t testing.TB, c phase.Case, id phase.ID, timing phase.Timing) (*phase.Run, *Clock)
+phasetest phasetest: func RunGroupSetup(t testing.TB, g phase.Group, c phase.Case, opts ...phase.RunOption) (*phase.Run, error)
+phasetest phasetest: func RunGroupTeardown(t testing.TB, g phase.Group, run *phase.Run) error
+phasetest phasetest: type Clock struct
+phasetest phasetest: type EventRecorder struct
+phasetest phasetest: type SpyRecorder struct
+result result: field EntityRef.ID string
+result result: field EntityRef.Kind string
+result result: func (Result) Actual() any
+result result: func (Result) Comparisons() int
+result result: func (Result) Entity() EntityRef
+result result: func (Result) Expected() any
+result result: func (Result) ForEntity(e EntityRef) Result
+result result: func (Result) Name() string
+result result: func (Result) Passed() bool
+result result: func (Result) Reason() string
+result result: func (Result) WithActual(v any) Result
+result result: func (Result) WithExpected(v any) Result
+result result: func Compared(name string, checks []bool) Result
+result result: func Failed(name, reason string) Result
+result result: type EntityRef struct
+result result: type Result struct
+x/comparators comparators: func ContainsAll[T comparable](name string, want, got []T) result.Result
+x/comparators comparators: func EachEntity(name string, entities []result.EntityRef, check func(result.EntityRef) result.Result) []result.Result
+x/comparators comparators: func PollCompare[T comparable](ctx context.Context, r *phase.Run, name string, want T, fetch func(context.Context) (T, error)) (result.Result, error)
+x/comparators comparators: func Unchanged(name string, before, after any) result.Result
+x/comparators comparators: func ValueMatch(name string, want, got any) result.Result
+x/config config: field CaseSpec.Declines map[phase.ID]string
+x/config config: field CaseSpec.Exclusive string
+x/config config: field CaseSpec.Fixtures []string
+x/config config: field CaseSpec.ID string
+x/config config: field CaseSpec.Params map[string]any
+x/config config: field CaseSpec.Status phase.CaseStatus
+x/config config: field CaseSpec.Tags []string
+x/config config: field CaseSpec.Timing map[phase.ID]phase.Timing
+x/config config: func (*SpecCase) Exclusive() (bool, string)
+x/config config: func (*SpecCase) Fixtures() []phase.Fixture
+x/config config: func (*SpecCase) ID() string
+x/config config: func (*SpecCase) Params() map[string]any
+x/config config: func (*SpecCase) Selects(id phase.ID) (bool, string)
+x/config config: func (*SpecCase) Status() phase.CaseStatus
+x/config config: func (*SpecCase) Tags() []string
+x/config config: func (*SpecCase) Timing(id phase.ID) (phase.Timing, bool)
+x/config config: func (CaseSpec) Case(reg Registry) (*SpecCase, error)
+x/config config: func Load(path string) (phase.Config, error)
+x/config config: func LoadCases(path string) ([]CaseSpec, error)
+x/config config: func Parse(data []byte) (phase.Config, error)
+x/config config: func ParseCases(data []byte) ([]CaseSpec, error)
+x/config config: type CaseSpec struct
+x/config config: type Registry map[string]func() phase.Fixture
+x/config config: type SpecCase struct

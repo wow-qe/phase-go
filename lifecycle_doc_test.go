@@ -71,10 +71,11 @@ func extractSection(t *testing.T, doc, name string) string {
 
 func TestArchitectureTablesMatchTheCode(t *testing.T) {
 	raw, err := os.ReadFile("docs/ARCHITECTURE.md")
+	// A checkout with CRLF conversion must not hide the markers.
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc := string(raw)
+	doc := strings.ReplaceAll(string(raw), "\r\n", "\n")
 	for name, want := range map[string]string{
 		"capabilities":    renderCapabilityTable(),
 		"group-lifecycle": renderGroupLifecycle(),

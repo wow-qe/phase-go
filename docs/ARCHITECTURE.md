@@ -216,6 +216,26 @@ a time:
   (their `replace` directives are in-repo development aids a consumer never
   inherits) — see docs/RELEASING.md.
 
+## Determinism contract
+
+For a given suite and configuration, reports are deterministic in case
+order (declaration order), phase order (topological rank), summary
+counts, and evidence CONTENT and attribution. Evidence order is
+deterministic across phases and per goroutine within a phase; the
+interleaving of records made concurrently through one phase's handle is
+unspecified. `Runner.Start` is not safe for concurrent use on one Runner
+— construct one Runner per concurrent session.
+
+## Operating envelope
+
+Construction precomputes each phase's transitive dependency set, so
+memory grows quadratically with pipeline depth: roughly 7 MiB at 500
+chained phases, ~100 MiB at 2,000, ~370 MiB at 4,000. Suites up to a few
+thousand phases and cases are the supported envelope; beyond that,
+shard the suite (MergeReports) or split pipelines. Results, errors and
+typed facts are unbounded by design (evidence must not be silently
+dropped); observations can be bounded with Config.MaxObservationsPerCase.
+
 ## Compatibility contract
 
 Pre-1.0: breaking changes only at minor versions, with CHANGELOG migration notes.

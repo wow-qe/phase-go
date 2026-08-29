@@ -33,7 +33,11 @@ jobs:
         with:
           languages: go
           queries: security-extended
-      - name: Build
-        run: go build ./...
+      - name: Build all modules
+        run: |
+          go build ./...
+          for m in x/config x/comparators examples/checkout examples/misuse; do
+            (cd "$m" && go build ./...) || exit 1
+          done
       - name: Analyze
         uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3

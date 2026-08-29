@@ -57,6 +57,17 @@ jobs:
             sha="$(git rev-list -n1 "refs/tags/$t" 2>/dev/null)" || { echo "missing lockstep tag: $t"; exit 1; }
             [[ "$sha" == "$GITHUB_SHA" ]] || { echo "tag $t points at $sha, not $GITHUB_SHA"; exit 1; }
           done
+      - name: Require green CI on the release commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # The tag build alone is not enough: the full multi-platform CI and
+        # security workflows for this exact commit must have succeeded, so a
+        # release can never publish a commit whose branch checks are red.
+        run: |
+          for wf in ci.yaml codeql.yaml; do
+            conclusion="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$wf"               --commit "$GITHUB_SHA" --json conclusion --jq 'map(select(.conclusion=="success")) | length')"
+            [ "$conclusion" -ge 1 ] || { echo "workflow $wf has no successful run for $GITHUB_SHA"; exit 1; }
+          done
       - name: Verify release
         run: make ci
       - name: Publish GitHub release notes

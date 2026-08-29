@@ -78,8 +78,12 @@ type runCore struct {
 // phase (a stashed handle, a goroutine, a parallel scheduler) is therefore
 // attributed to the phase that owned the handle, never to whichever phase
 // happens to be running. All views share one evidence core; recording is
-// safe for concurrent use, and evidence is emitted in deterministic order at
-// case completion.
+// safe for concurrent use. Evidence order at case completion is
+// deterministic ACROSS phases (topological rank) and, within one phase,
+// per goroutine (a single goroutine's records keep their call order); the
+// interleaving of records made concurrently through one phase's handle is
+// unspecified — content, attribution and counts are guaranteed, relative
+// order of concurrent same-phase writes is not.
 type Run struct {
 	c     Case
 	scope Scope

@@ -48,6 +48,19 @@ binary-check: ## Fail when a compiled binary is tracked by git
 		if [ -n "$$bad" ]; then echo "tracked binaries:"; echo "$$bad"; exit 1; fi; \
 	fi
 
+.PHONY: api-check
+api-check: ## Fail when the exported API differs from the committed baseline
+	@tmp=$$(mktemp); \
+	$(GO) run ./cmd/apidump . result phasetest x/config x/comparators > "$$tmp"; \
+	diff -u api/baseline.txt "$$tmp" || { echo "exported API changed: update api/baseline.txt deliberately (with a CHANGELOG entry)"; rm -f "$$tmp"; exit 1; }; \
+	rm -f "$$tmp"
+
+.PHONY: fuzz
+fuzz: ## Explore the fuzz targets briefly (seeds always run under make test)
+	@for tgt in FuzzSelectByTags FuzzVerifyReportJSON FuzzRedactMatching; do \
+		$(GO) test -run "^$$tgt$$" -fuzz "^$$tgt$$" -fuzztime 10s . || exit 1; \
+	done
+
 .PHONY: comment-check
 comment-check: ## Enforce the comment standard (patterns, stale claims, doc links)
 	$(GO) run ./cmd/commentcheck
@@ -94,7 +107,7 @@ deps: ## Download and verify module dependencies
 check: fmt-check vet comment-check binary-check test ## Run the fast local quality gate
 
 .PHONY: ci
-ci: mod-tidy-check fmt-check vet comment-check binary-check test-race test-cover ## Run the core CI gate
+ci: mod-tidy-check fmt-check vet comment-check binary-check api-check test-race test-cover ## Run the core CI gate
 
 .PHONY: clean
 clean: ## Remove local build and coverage artifacts

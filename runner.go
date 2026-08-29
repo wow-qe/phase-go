@@ -491,6 +491,10 @@ const lateRank = int(^uint(0) >> 1)
 //   - cancellation is Errored, never Failed;
 //   - fixtures set up in order, tear down in reverse, on every path;
 //   - the case's status is derived in exactly one place, from the evidence.
+//
+// Start is not safe for concurrent use on one Runner: observers and their
+// error accounting are per-Runner, so concurrent sessions would interleave
+// on them. Construct one Runner per concurrent session.
 func (r *Runner) Start(ctx context.Context, cases []Case) (*Session, error) {
 	prepared, err := r.preflight(cases)
 	if err != nil {

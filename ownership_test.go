@@ -6,8 +6,10 @@ package phase
 import (
 	"bytes"
 	"context"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wow-qe/phase-go/result"
 )
@@ -126,4 +128,33 @@ func TestScopeKeysAreCopiedOnRead(t *testing.T) {
 	if got := run.Scope().Keys["tenant"]; got != "original" {
 		t.Fatalf("Keys[tenant] = %q — Scope() must not alias internal state", got)
 	}
+}
+
+func TestCancelledConcurrentRunsLeakNoGoroutines(t *testing.T) {
+	// Cancellation-heavy concurrent execution must not strand workers: after
+	// Start returns and a settling pause, the goroutine count returns to its
+	// baseline.
+	baseline := runtime.NumGoroutine()
+	for i := 0; i < 5; i++ {
+		r := mustRunner(t, Config{Defaults: Timing{Attempts: 1000, Interval: time.Millisecond}, MaxCaseConcurrency: 3, MaxPhaseConcurrency: 2},
+			&recordingPhase{stubPhase: stubPhase{id: "wait"}, do: func(ctx context.Context, run *Run) error {
+				_, err := WaitUntil(ctx, run, func(context.Context) (int, bool, error) { return 0, false, nil })
+				return err
+			}},
+		)
+		ctx, cancel := context.WithCancel(context.Background())
+		go func() { time.Sleep(5 * time.Millisecond); cancel() }()
+		if _, err := r.Start(ctx, []Case{&stubCase{id: "a"}, &stubCase{id: "b"}, &stubCase{id: "c"}, &stubCase{id: "d"}}); err != nil {
+			t.Fatal(err)
+		}
+		cancel()
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if runtime.NumGoroutine() <= baseline+2 {
+			return
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	t.Fatalf("goroutines: baseline %d, now %d — workers leaked past cancellation", baseline, runtime.NumGoroutine())
 }

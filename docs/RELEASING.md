@@ -73,3 +73,22 @@ are provisioned in CI.
 
 Do not retag a published version. Correct mistakes with a new patch
 release across all three modules.
+
+## Tag immutability
+
+Once a version is served by the Go module proxy and recorded by the
+checksum database it is immutable: moving a published tag makes caches
+that captured an intermediate payload fail checksum verification with a
+security error. Never move a published tag; publish corrections as a new
+lockstep patch release. Repository administrators must protect `v*` and
+`x/*/v*` tag patterns against deletion and force-update (GitHub rulesets:
+Settings → Rules → New tag ruleset → block deletions and non-fast-forward
+updates), and before publishing, verify the candidate version is absent
+from GitHub Releases, proxy.golang.org and sum.golang.org.
+
+Incident record (2026-08-28): during the v0.1.0 release the three tags
+were moved twice before stabilizing while pre-publication defects were
+fixed. The final artifacts are consistent with sum.golang.org, and fresh
+consumers resolve correctly; a cache that fetched an intermediate payload
+must be cleared (`go clean -modcache`, or remove the module's entries).
+The workflow and this runbook now treat any published tag as frozen.

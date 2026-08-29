@@ -65,8 +65,8 @@ jobs:
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
-      - name: Check module tidiness
-        run: go mod tidy && git diff --exit-code -- go.mod go.sum
+      - name: Check module tidiness (all modules)
+        run: make mod-tidy-check
       - name: Check formatting
         run: test -z "$(gofmt -s -l .)" || { gofmt -s -l .; exit 1; }
       - name: Vet
@@ -75,6 +75,8 @@ jobs:
         run: go run ./cmd/commentcheck
       - name: No tracked binaries
         run: make binary-check
+      - name: Exported API matches baseline
+        run: make api-check
       - name: Lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
@@ -151,6 +153,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Install Gitleaks
-        run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Scan repository
         run: gitleaks git --redact --no-banner

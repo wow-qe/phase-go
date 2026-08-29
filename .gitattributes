@@ -1,0 +1,8 @@
+# Go sources and generated-marker documents keep LF on every platform so
+# marker-based tests and gofmt behave identically across checkouts.
+*.go text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+Makefile text eol=lf
+*.sh text eol=lf

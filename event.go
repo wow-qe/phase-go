@@ -23,6 +23,9 @@ import "time"
 //  5. Emission time is never charged against Timing budgets.
 //  6. Observer panics are contained, surfaced on Session.ObserverErrors()
 //     and the report's Diagnostics — never fatal, never a silent detach.
+//     A callback must return promptly and must not call back into the
+//     Runner or Session: delivery is serialized under a lock, so a
+//     re-entrant call deadlocks and a blocking callback stalls execution.
 //  7. WithProgress and WithCaseObserver are frozen projections of this
 //     stream; new capability lands here.
 type EventKind int

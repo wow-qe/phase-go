@@ -64,8 +64,14 @@ func (e *LoadError) Error() string {
 	return fmt.Sprintf("load: %s: %s: %s", e.Code, e.Subject, e.Detail)
 }
 
-// FrameworkError means phase itself broke one of its invariants: the report
-// cannot be trusted past this point. Maps to exit code 3.
+// FrameworkError means an invariant of this library was violated. It has
+// two distinct fates, decided by where it surfaces. CONTAINED: raised
+// during a run (a stage-capability or Produces violation), it is recorded
+// as that case's evidence — the case is Errored, the report stays
+// internally consistent, exit code 1. UNCONTAINED: returned by
+// Report.Verify, meaning the report itself is inconsistent — exit code 3,
+// the one signal that the numbers cannot be trusted. ExitCode() is the
+// single authority for that mapping.
 type FrameworkError struct {
 	Invariant string
 	Detail    string
